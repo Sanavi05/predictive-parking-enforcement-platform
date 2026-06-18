@@ -1,3 +1,82 @@
-# Environment variables
+# --- Environment variables ---
 .env
+.env.*
+
+# --- OS / editor ---
+.DS_Store
+*.swp
+*.swo
+*.tmp
+.vscode/
+.idea/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# Django/Flask uploads / caches (if any)
+media/
+staticfiles/
+
+# --- Logs ---
+*.log
+
+# --- SQLite / DB ---
+*.sqlite
+*.sqlite3
+*.db
+*.duckdb
+
+# --- Node / frontend ---
 frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/coverage/
+frontend/.cache/
+frontend/.env
+frontend/.env.*
+
+# --- Frontend build artifacts / tooling ---
+frontend/.eslintcache
+
+# --- ML / data artifacts ---
+models/
+# Keep folder placeholders if present, but ignore everything else under models
+!models/.gitkeep
+
+# Typical model/data outputs that may be stored alongside code
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.h5
+*.ckpt
+*.csv~
+
+# --- Notebooks ---
+# Usually you may want to commit notebooks, but ignore execution outputs
+**/notebooks/**/.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# --- Jupyter generated files ---
+*.ipynb_checkpoints/
+
+# --- Coverage / test ---
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Docker ---
+# No docker-specific ignores by default; uncomment if you build local artifacts
+# *.tar
+
