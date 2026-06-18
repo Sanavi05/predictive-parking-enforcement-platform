@@ -12,13 +12,19 @@ from app.core.logging import logger
 
 def _project_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "models").exists():
+        models_dir = parent / "models"
+        if (
+            (models_dir / "volume" / "volume_model.pkl").exists()
+            and (models_dir / "hotspot" / "hotspot_model.pkl").exists()
+            and (models_dir / "congestion" / "congestion_model.pkl").exists()
+        ):
             return parent
     return Path(__file__).resolve().parents[3]
 
 
 PROJECT_ROOT = _project_root()
 MODEL_ROOT = PROJECT_ROOT / "models"
+logger.info("Using model artifact root: %s", MODEL_ROOT)
 
 
 class ModelArtifactError(RuntimeError):
