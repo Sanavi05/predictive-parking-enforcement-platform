@@ -13,6 +13,9 @@ app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
     description="Predictive parking enforcement intelligence APIs.",
+    docs_url=f"{settings.api_v1_prefix}/docs",
+    redoc_url=f"{settings.api_v1_prefix}/redoc",
+    openapi_url=f"{settings.api_v1_prefix}/openapi.json",
 )
 
 
