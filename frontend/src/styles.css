@@ -15,3 +15,7 @@ body {
 .metric {
   @apply rounded-lg border border-line bg-slate-950/40 p-4;
 }
+
+.prediction-input {
+  @apply h-[62px] rounded-lg border border-[#40516a] bg-[#061321] px-5 font-mono text-xl font-black tracking-[0.08em] text-[#e5ecf9] outline-none transition placeholder:text-[#8390a4] focus:border-[#a8c4ff];
+}

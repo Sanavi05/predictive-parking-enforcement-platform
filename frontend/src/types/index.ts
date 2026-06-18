@@ -13,9 +13,12 @@ export type AnalyticsResponse = {
 };
 
 export type Hotspot = {
-  latitude: number;
-  longitude: number;
-  risk_score: number;
+  lat?: number;
+  lng?: number;
+  latitude?: number;
+  longitude?: number;
+  risk?: "high" | "medium" | "low";
+  risk_score?: number;
   predicted_violations?: number;
   congestion_score?: number;
   recommended_officers?: number;

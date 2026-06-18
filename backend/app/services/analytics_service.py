@@ -49,6 +49,7 @@ class AnalyticsService:
                     Violation.latitude,
                     Violation.longitude,
                     func.min(Violation.junction_name).label("junction_name"),
+                    func.min(Violation.police_station).label("police_station"),
                     func.count(Violation.id).label("count"),
                 )
                 .group_by(Violation.latitude, Violation.longitude)
@@ -58,17 +59,30 @@ class AnalyticsService:
             )
             if rows:
                 max_count = max(row.count for row in rows)
-                return [
-                    HotspotResponse(
-                        latitude=row.latitude,
-                        longitude=row.longitude,
-                        zone_name=row.junction_name,
-                        predicted_violations=int(row.count),
-                        congestion_score=round((row.count / max_count) * 100, 2),
-                        risk_score=round((row.count / max_count) * 100, 2),
+                hotspots = []
+                for row in rows:
+                    name = None
+                    j_name = str(row.junction_name).strip() if row.junction_name else ""
+                    p_name = str(row.police_station).strip() if row.police_station else ""
+                    
+                    if j_name and j_name.lower() not in ("no junction", "unknown", "none"):
+                        name = j_name
+                    elif p_name and p_name.lower() not in ("no police station", "unknown", "none"):
+                        name = f"{p_name} Area"
+                    else:
+                        name = f"Zone {row.latitude:.4f}, {row.longitude:.4f}"
+                        
+                    hotspots.append(
+                        HotspotResponse(
+                            latitude=row.latitude,
+                            longitude=row.longitude,
+                            zone_name=name,
+                            predicted_violations=int(row.count),
+                            congestion_score=round((row.count / max_count) * 100, 2),
+                            risk_score=round((row.count / max_count) * 100, 2),
+                        )
                     )
-                    for row in rows
-                ]
+                return hotspots
         except SQLAlchemyError as exc:
             logger.warning("Hotspot query failed; using processed dataset: %s", exc)
         return self._dataset_hotspots()
@@ -116,23 +130,41 @@ class AnalyticsService:
         frame = self._dataset()
         grouped = (
             frame.groupby(["h3_cell", "latitude", "longitude"], dropna=True)
-            .size()
-            .reset_index(name="total")
+            .agg(
+                total=("h3_cell", "size"),
+                junction_name=("junction_name", "first"),
+                police_station=("police_station", "first"),
+            )
+            .reset_index()
             .sort_values("total", ascending=False)
             .head(50)
         )
         max_count = max(int(grouped["total"].max()), 1)
-        return [
-            HotspotResponse(
-                latitude=float(row.latitude),
-                longitude=float(row.longitude),
-                zone_name=str(row.h3_cell),
-                predicted_violations=int(row.total),
-                congestion_score=round((float(row.total) / max_count) * 100, 2),
-                risk_score=round((float(row.total) / max_count) * 100, 2),
+        
+        hotspots = []
+        for row in grouped.itertuples(index=False):
+            name = None
+            j_name = str(row.junction_name).strip() if pd.notna(row.junction_name) else ""
+            p_name = str(row.police_station).strip() if pd.notna(row.police_station) else ""
+            
+            if j_name and j_name.lower() not in ("no junction", "unknown", "none"):
+                name = j_name
+            elif p_name and p_name.lower() not in ("no police station", "unknown", "none"):
+                name = f"{p_name} Area"
+            else:
+                name = f"Zone {str(row.h3_cell)[:8]}"
+                
+            hotspots.append(
+                HotspotResponse(
+                    latitude=float(row.latitude),
+                    longitude=float(row.longitude),
+                    zone_name=name,
+                    predicted_violations=int(row.total),
+                    congestion_score=round((float(row.total) / max_count) * 100, 2),
+                    risk_score=round((float(row.total) / max_count) * 100, 2),
+                )
             )
-            for row in grouped.itertuples(index=False)
-        ]
+        return hotspots
 
     def _series_buckets(self, series: pd.Series, limit: int | None = None) -> list[CountBucket]:
         counts = series.fillna("Unknown").astype(str).value_counts()
