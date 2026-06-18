@@ -49,13 +49,7 @@ frontend/.env.*
 # --- Frontend build artifacts / tooling ---
 frontend/.eslintcache
 
-# --- ML / data artifacts ---
-models/
-# Keep folder placeholders if present, but ignore everything else under models
-!models/.gitkeep
-
 # Typical model/data outputs that may be stored alongside code
-*.pkl
 *.joblib
 *.pt
 *.pth

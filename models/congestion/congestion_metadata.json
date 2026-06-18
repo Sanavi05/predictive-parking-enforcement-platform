@@ -1,0 +1,68 @@
+{
+    "model_name": "Congestion Impact Scorer",
+    "model_version": "2.0.0",
+    "created_at": "2026-06-18T10:39:02Z",
+    "outputs": {
+        "regression": {
+            "model_type": "GradientBoostingRegressor",
+            "target": "congestion_impact_score",
+            "validation_r2": 0.9998,
+            "validation_rmse": 0.0301,
+            "validation_mae": 0.0114
+        },
+        "classification": {
+            "model_type": "GradientBoostingClassifier",
+            "target": "congestion_risk_level",
+            "accuracy": 0.9993,
+            "f1_weighted": 0.9993
+        }
+    },
+    "features": [
+        "hour",
+        "day_of_week",
+        "month",
+        "is_weekend",
+        "at_junction",
+        "h3_total_violations",
+        "h3_hour_density",
+        "vehicle_weight",
+        "junction_importance",
+        "station_density",
+        "violation_count",
+        "offence_code_count",
+        "vt_no_parking",
+        "vt_wrong_parking",
+        "vt_parking_in_a_main_road",
+        "vt_parking_near_road_crossing",
+        "vt_parking_on_footpath",
+        "vt_double_parking",
+        "vt_parking_near_bustop_school_hospital_etc",
+        "violation_type_count",
+        "weighted_severity",
+        "junction_vehicle_interaction",
+        "density_ratio",
+        "is_peak_hour",
+        "is_night",
+        "log_h3_total_violations",
+        "log_h3_hour_density",
+        "time_period",
+        "vehicle_category"
+    ],
+    "top_features": [
+        "junction_importance",
+        "violation_count",
+        "station_density",
+        "offence_code_count",
+        "vehicle_weight",
+        "vehicle_category_hgv",
+        "junction_vehicle_interaction",
+        "month",
+        "weighted_severity",
+        "log_h3_total_violations"
+    ],
+    "training": {
+        "winner_model": "gradient_boosting",
+        "train_size": 233556,
+        "test_size": 58389
+    }
+}
