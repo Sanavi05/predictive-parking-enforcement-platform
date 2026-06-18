@@ -1,0 +1,24 @@
+{
+  "model": "XGBoostClassifier",
+  "features": [
+    "hour",
+    "day_of_week",
+    "at_junction_pct",
+    "two_wheeler_pct",
+    "car_pct",
+    "auto_pct",
+    "no_parking_pct",
+    "main_road_pct"
+  ],
+  "target": "activity_label",
+  "classes": {
+    "0": "normal",
+    "1": "elevated",
+    "2": "spike"
+  },
+  "n_estimators": 300,
+  "learning_rate": 0.05,
+  "max_depth": 6,
+  "subsample": 0.7,
+  "colsample_bytree": 0.7
+}
