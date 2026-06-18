@@ -25,6 +25,9 @@ class HotspotResponse(BaseModel):
     latitude: float
     longitude: float
     risk_score: float
+    zone_name: str | None = None
+    predicted_violations: int | None = None
+    congestion_score: float | None = None
 
 
 class DashboardSummaryResponse(BaseModel):

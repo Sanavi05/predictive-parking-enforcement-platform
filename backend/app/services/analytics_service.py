@@ -48,6 +48,7 @@ class AnalyticsService:
                 self.db.query(
                     Violation.latitude,
                     Violation.longitude,
+                    func.min(Violation.junction_name).label("junction_name"),
                     func.count(Violation.id).label("count"),
                 )
                 .group_by(Violation.latitude, Violation.longitude)
@@ -58,7 +59,14 @@ class AnalyticsService:
             if rows:
                 max_count = max(row.count for row in rows)
                 return [
-                    HotspotResponse(latitude=row.latitude, longitude=row.longitude, risk_score=round((row.count / max_count) * 100, 2))
+                    HotspotResponse(
+                        latitude=row.latitude,
+                        longitude=row.longitude,
+                        zone_name=row.junction_name,
+                        predicted_violations=int(row.count),
+                        congestion_score=round((row.count / max_count) * 100, 2),
+                        risk_score=round((row.count / max_count) * 100, 2),
+                    )
                     for row in rows
                 ]
         except SQLAlchemyError as exc:
@@ -118,6 +126,9 @@ class AnalyticsService:
             HotspotResponse(
                 latitude=float(row.latitude),
                 longitude=float(row.longitude),
+                zone_name=str(row.h3_cell),
+                predicted_violations=int(row.total),
+                congestion_score=round((float(row.total) / max_count) * 100, 2),
                 risk_score=round((float(row.total) / max_count) * 100, 2),
             )
             for row in grouped.itertuples(index=False)
