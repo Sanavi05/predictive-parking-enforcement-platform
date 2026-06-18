@@ -12,7 +12,7 @@ export default function Predictions() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    mutation.mutate({ latitude: Number(latitude), longitude: Number(longitude), time });
+    mutation.mutate({ latitude: Number(latitude), longitude: Number(longitude), timestamp: time });
   }
 
   return (

@@ -1,29 +1,33 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import analytics, health, hotspots, patrol, predictions
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.core.logging import configure_logging, logger
-from app.services.ml_service import ml_service
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    configure_logging()
-    logger.info("Starting %s", settings.app_name)
-    ml_service.load_models()
-    yield
-    logger.info("Shutting down %s", settings.app_name)
+from app.services.database_seed import seed_violations_from_dataset
+from app.services.prediction_engine import prediction_engine
 
 
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
     description="Predictive parking enforcement intelligence APIs.",
-    lifespan=lifespan,
 )
+
+
+@app.on_event("startup")
+def load_prediction_models() -> None:
+    configure_logging()
+    logger.info("Starting %s", settings.app_name)
+    prediction_engine.load_models()
+    with SessionLocal() as db:
+        seed_violations_from_dataset(db)
+
+
+@app.on_event("shutdown")
+def shutdown() -> None:
+    logger.info("Shutting down %s", settings.app_name)
 
 app.add_middleware(
     CORSMiddleware,

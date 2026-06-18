@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getAnalytics, getHotspots, getPatrolRecommendations } from "../services/api";
+import { getAnalytics, getDashboardSummary, getHotspots, getPatrolRecommendations } from "../services/api";
 
 export function useAnalytics() {
   return useQuery({ queryKey: ["analytics"], queryFn: getAnalytics });
@@ -8,6 +8,10 @@ export function useAnalytics() {
 
 export function useHotspots() {
   return useQuery({ queryKey: ["hotspots"], queryFn: getHotspots });
+}
+
+export function useDashboardSummary() {
+  return useQuery({ queryKey: ["dashboard-summary"], queryFn: getDashboardSummary });
 }
 
 export function usePatrolRecommendations() {

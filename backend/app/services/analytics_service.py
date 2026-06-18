@@ -1,19 +1,25 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pandas as pd
 from sqlalchemy import desc, extract, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.logging import logger
 from app.models.violation import Violation
-from app.schemas.response import AnalyticsResponse, CountBucket, HotspotResponse
+from app.schemas.response import AnalyticsResponse, CountBucket, DashboardSummaryResponse, HotspotResponse
 
 
-MOCK_VIOLATIONS = [
-    {"latitude": 12.9716, "longitude": 77.5946, "junction": "MG Road Metro", "station": "Cubbon Park", "vehicle": "Car", "hour": 8, "risk": 92},
-    {"latitude": 12.9767, "longitude": 77.5713, "junction": "Majestic Bus Stand", "station": "Upparpet", "vehicle": "Two Wheeler", "hour": 9, "risk": 87},
-    {"latitude": 12.9352, "longitude": 77.6245, "junction": "Sony World Junction", "station": "Koramangala", "vehicle": "Car", "hour": 18, "risk": 83},
-    {"latitude": 12.9784, "longitude": 77.6408, "junction": "Indiranagar 100 Feet Road", "station": "Indiranagar", "vehicle": "Auto", "hour": 19, "risk": 78},
-    {"latitude": 12.9141, "longitude": 77.6101, "junction": "Jayanagar 4th Block", "station": "Jayanagar", "vehicle": "Car", "hour": 11, "risk": 66},
-]
+def _project_root() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "datasets").exists():
+            return parent
+    return Path(__file__).resolve().parents[3]
+
+
+DATASET_PATH = _project_root() / "datasets" / "parksight_processed.csv"
 
 
 class AnalyticsService:
@@ -23,19 +29,18 @@ class AnalyticsService:
     def get_historical_analytics(self) -> AnalyticsResponse:
         try:
             total = self.db.query(func.count(Violation.id)).scalar() or 0
-            if total == 0:
-                return self._mock_analytics()
-            return AnalyticsResponse(
-                total_violations=total,
-                violations_by_hour=self._bucket_by(extract("hour", Violation.timestamp)),
-                violations_by_vehicle_type=self._bucket_by(Violation.vehicle_type),
-                top_junctions=self._bucket_by(Violation.junction_name, limit=10),
-                top_police_stations=self._bucket_by(Violation.police_station, limit=10),
-                peak_periods=self._peak_periods(),
-            )
+            if total > 0:
+                return AnalyticsResponse(
+                    total_violations=total,
+                    violations_by_hour=self._bucket_by(extract("hour", Violation.timestamp)),
+                    violations_by_vehicle_type=self._bucket_by(Violation.vehicle_type),
+                    top_junctions=self._bucket_by(Violation.junction_name, limit=10),
+                    top_police_stations=self._bucket_by(Violation.police_station, limit=10),
+                    peak_periods=self._peak_periods(),
+                )
         except SQLAlchemyError as exc:
-            logger.warning("Analytics query failed, returning mock data: %s", exc)
-            return self._mock_analytics()
+            logger.warning("Analytics query failed; using processed dataset: %s", exc)
+        return self._dataset_analytics()
 
     def get_hotspot_heatmap(self) -> list[HotspotResponse]:
         try:
@@ -50,16 +55,28 @@ class AnalyticsService:
                 .limit(50)
                 .all()
             )
-            if not rows:
-                return self._mock_hotspots()
-            max_count = max(row.count for row in rows)
-            return [
-                HotspotResponse(latitude=row.latitude, longitude=row.longitude, risk_score=round((row.count / max_count) * 100, 2))
-                for row in rows
-            ]
+            if rows:
+                max_count = max(row.count for row in rows)
+                return [
+                    HotspotResponse(latitude=row.latitude, longitude=row.longitude, risk_score=round((row.count / max_count) * 100, 2))
+                    for row in rows
+                ]
         except SQLAlchemyError as exc:
-            logger.warning("Hotspot query failed, returning mock data: %s", exc)
-            return self._mock_hotspots()
+            logger.warning("Hotspot query failed; using processed dataset: %s", exc)
+        return self._dataset_hotspots()
+
+    def get_dashboard_summary(self) -> DashboardSummaryResponse:
+        hotspots = self.get_hotspot_heatmap()
+        analytics = self.get_historical_analytics()
+        return DashboardSummaryResponse(
+            critical_zones=sum(1 for zone in hotspots if zone.risk_score >= 80),
+            high_risk_zones=sum(1 for zone in hotspots if 60 <= zone.risk_score < 80),
+            expected_violations_today=int(analytics.total_violations),
+            average_congestion_score=round(
+                min(100.0, sum(zone.risk_score for zone in hotspots) / max(len(hotspots), 1) * 0.75),
+                2,
+            ),
+        )
 
     def _bucket_by(self, column, limit: int | None = None) -> list[CountBucket]:
         query = self.db.query(column.label("label"), func.count(Violation.id).label("count")).group_by(column).order_by(desc("count"))
@@ -71,18 +88,43 @@ class AnalyticsService:
         buckets = self._bucket_by(extract("hour", Violation.timestamp), limit=3)
         return [f"{bucket.label}:00" for bucket in buckets]
 
-    def _mock_analytics(self) -> AnalyticsResponse:
+    def _dataset(self) -> pd.DataFrame:
+        frame = pd.read_csv(DATASET_PATH)
+        frame["created_datetime"] = pd.to_datetime(frame["created_datetime"], errors="coerce")
+        return frame
+
+    def _dataset_analytics(self) -> AnalyticsResponse:
+        frame = self._dataset()
         return AnalyticsResponse(
-            total_violations=len(MOCK_VIOLATIONS),
-            violations_by_hour=[CountBucket(label=str(item["hour"]), count=1) for item in MOCK_VIOLATIONS],
-            violations_by_vehicle_type=[CountBucket(label="Car", count=3), CountBucket(label="Two Wheeler", count=1), CountBucket(label="Auto", count=1)],
-            top_junctions=[CountBucket(label=str(item["junction"]), count=1) for item in MOCK_VIOLATIONS],
-            top_police_stations=[CountBucket(label=str(item["station"]), count=1) for item in MOCK_VIOLATIONS],
-            peak_periods=["08:00", "18:00", "19:00"],
+            total_violations=int(len(frame)),
+            violations_by_hour=self._series_buckets(frame["hour"]),
+            violations_by_vehicle_type=self._series_buckets(frame["vehicle_type"]),
+            top_junctions=self._series_buckets(frame["junction_name"], limit=10),
+            top_police_stations=self._series_buckets(frame["police_station"], limit=10),
+            peak_periods=[f"{bucket.label}:00" for bucket in self._series_buckets(frame["hour"], limit=3)],
         )
 
-    def _mock_hotspots(self) -> list[HotspotResponse]:
+    def _dataset_hotspots(self) -> list[HotspotResponse]:
+        frame = self._dataset()
+        grouped = (
+            frame.groupby(["h3_cell", "latitude", "longitude"], dropna=True)
+            .size()
+            .reset_index(name="total")
+            .sort_values("total", ascending=False)
+            .head(50)
+        )
+        max_count = max(int(grouped["total"].max()), 1)
         return [
-            HotspotResponse(latitude=float(item["latitude"]), longitude=float(item["longitude"]), risk_score=float(item["risk"]))
-            for item in MOCK_VIOLATIONS
+            HotspotResponse(
+                latitude=float(row.latitude),
+                longitude=float(row.longitude),
+                risk_score=round((float(row.total) / max_count) * 100, 2),
+            )
+            for row in grouped.itertuples(index=False)
         ]
+
+    def _series_buckets(self, series: pd.Series, limit: int | None = None) -> list[CountBucket]:
+        counts = series.fillna("Unknown").astype(str).value_counts()
+        if limit:
+            counts = counts.head(limit)
+        return [CountBucket(label=str(label), count=int(count)) for label, count in counts.items()]

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { AnalyticsResponse, Hotspot, PatrolRecommendation, PredictionRequest, PredictionResponse } from "../types";
+import type { AnalyticsResponse, DashboardSummaryResponse, Hotspot, PatrolRecommendation, PredictionRequest, PredictionResponse } from "../types";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api",
@@ -18,6 +18,15 @@ export async function getHotspots() {
 
 export async function predictRisk(payload: PredictionRequest) {
   const { data } = await api.post<PredictionResponse>("/predict", payload);
+  return data;
+}
+
+export async function predictLocation(payload: PredictionRequest) {
+  return predictRisk(payload);
+}
+
+export async function getDashboardSummary() {
+  const { data } = await api.get<DashboardSummaryResponse>("/dashboard-summary");
   return data;
 }
 

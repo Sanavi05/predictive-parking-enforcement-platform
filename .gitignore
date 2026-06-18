@@ -56,6 +56,7 @@ frontend/.eslintcache
 *.h5
 *.ckpt
 *.csv~
+datasets/original_dataset.csv
 
 # --- Notebooks ---
 # Usually you may want to commit notebooks, but ignore execution outputs
@@ -73,4 +74,3 @@ htmlcov/
 # --- Docker ---
 # No docker-specific ignores by default; uncomment if you build local artifacts
 # *.tar
-

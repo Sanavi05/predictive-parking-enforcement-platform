@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from app.models.prediction_response import PredictionResponse
+
 
 class HealthResponse(BaseModel):
     status: str
@@ -25,12 +27,11 @@ class HotspotResponse(BaseModel):
     risk_score: float
 
 
-class PredictionResponse(BaseModel):
-    risk_score: float
-    predicted_violations: int
-    risk_level: str
-    congestion_impact: float
-    recommended_action: str
+class DashboardSummaryResponse(BaseModel):
+    critical_zones: int
+    high_risk_zones: int
+    expected_violations_today: int
+    average_congestion_score: float
 
 
 class PatrolRecommendation(BaseModel):

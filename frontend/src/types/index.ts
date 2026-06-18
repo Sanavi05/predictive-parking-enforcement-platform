@@ -16,20 +16,34 @@ export type Hotspot = {
   latitude: number;
   longitude: number;
   risk_score: number;
+  predicted_violations?: number;
+  congestion_score?: number;
+  recommended_officers?: number;
+  recommended_tow_trucks?: number;
+  zone_name?: string;
 };
 
 export type PredictionRequest = {
   latitude: number;
   longitude: number;
-  time: string;
+  timestamp: string;
 };
 
 export type PredictionResponse = {
-  risk_score: number;
   predicted_violations: number;
+  risk_score: number;
   risk_level: string;
-  congestion_impact: number;
-  recommended_action: string;
+  congestion_score: number;
+  congestion_level: string;
+  recommended_officers: number;
+  recommended_tow_trucks: number;
+};
+
+export type DashboardSummaryResponse = {
+  critical_zones: number;
+  high_risk_zones: number;
+  expected_violations_today: number;
+  average_congestion_score: number;
 };
 
 export type PatrolRecommendation = {

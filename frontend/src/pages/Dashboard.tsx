@@ -1,21 +1,21 @@
 import HeatMap from "../components/HeatMap";
 import MapView from "../components/MapView";
 import MetricCards from "../components/MetricCards";
-import { useAnalytics, useHotspots } from "../hooks/useApi";
+import { useAnalytics, useDashboardSummary, useHotspots } from "../hooks/useApi";
 
 export default function Dashboard() {
   const { data: analytics } = useAnalytics();
+  const { data: summary } = useDashboardSummary();
   const { data: hotspots = [] } = useHotspots();
-  const criticalZones = hotspots.filter((item) => item.risk_score >= 85).length;
 
   return (
     <div className="space-y-5">
       <MetricCards
         metrics={[
-          { label: "Total Violations", value: analytics?.total_violations ?? "--", tone: "critical" },
-          { label: "Critical Zones", value: criticalZones, tone: "high" },
-          { label: "Peak Periods", value: analytics?.peak_periods.join(", ") ?? "--", tone: "moderate" },
-          { label: "System Status", value: "Live", tone: "safe" },
+          { label: "Critical Zones", value: summary?.critical_zones ?? "--", tone: "critical" },
+          { label: "High Risk Zones", value: summary?.high_risk_zones ?? "--", tone: "high" },
+          { label: "Expected Violations Today", value: summary?.expected_violations_today ?? analytics?.total_violations ?? "--", tone: "moderate" },
+          { label: "Average Congestion", value: summary?.average_congestion_score ?? "--", tone: "safe" },
         ]}
       />
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
