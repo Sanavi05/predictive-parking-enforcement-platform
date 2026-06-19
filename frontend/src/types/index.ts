@@ -40,6 +40,7 @@ export type PredictionResponse = {
   congestion_level: string;
   recommended_officers: number;
   recommended_tow_trucks: number;
+  simulation_curve: number[];
 };
 
 export type DashboardSummaryResponse = {

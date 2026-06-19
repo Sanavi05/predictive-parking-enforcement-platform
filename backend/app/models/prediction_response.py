@@ -9,6 +9,7 @@ class PredictionResponse(BaseModel):
     congestion_level: str
     recommended_officers: int
     recommended_tow_trucks: int
+    simulation_curve: list[float] = []
 
 class ExplanationDriver(BaseModel):
     label: str

@@ -2,7 +2,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   AlertTriangle,
-  Info,
   CalendarDays,
   Clock3,
   Cpu,
@@ -12,6 +11,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Users,
 } from "lucide-react";
 
 import MapView from "../components/MapView";
@@ -77,85 +77,104 @@ export default function Predictions() {
       </section>
 
       <section className="grid items-start gap-8 xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
-        {/* ── Left: form ── */}
-        <form
-          className="min-w-0 self-start rounded-xl border border-[#20324a] bg-[#111a29] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8"
-          onSubmit={onSubmit}
-        >
-          <h2 className="mb-9 flex items-center gap-3 text-3xl font-medium text-[#e8f0ff]">
-            <Cpu className="text-[#a8c4ff]" size={26} />
-            Parameter Configuration
-          </h2>
 
-          <div className="grid min-w-0 gap-5 sm:grid-cols-2">
-            <Field label="Latitude">
-              <input
-                className="prediction-input"
-                value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
-                required
-              />
-            </Field>
-            <Field label="Longitude">
-              <input
-                className="prediction-input"
-                value={longitude}
-                onChange={(e) => setLongitude(e.target.value)}
-                required
-              />
-            </Field>
-          </div>
-
-          <Field label="Prediction Date" className="mt-8">
-            <div className="relative">
-              <input
-                className="prediction-input w-full pr-12"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-              <CalendarDays
-                className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]"
-                size={25}
-              />
-            </div>
-          </Field>
-
-          <Field label="Time Window" className="mt-8">
-            <div className="relative">
-              <input
-                className="prediction-input w-full pr-12"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                required
-              />
-              <Clock3
-                className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]"
-                size={25}
-              />
-            </div>
-          </Field>
-
-          <button
-            className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg bg-[#a8c4ff] px-5 py-5 text-xl font-black uppercase text-[#102149] shadow-[0_16px_32px_rgba(95,128,200,0.28)] disabled:opacity-70"
-            type="submit"
-            disabled={mutation.isPending || explanationMutation.isPending}
+        {/* ── Left column: form + impact simulator ── */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <form
+            className="min-w-0 rounded-xl border border-[#20324a] bg-[#111a29] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8"
+            onSubmit={onSubmit}
           >
-            <Rocket size={25} />
-            {mutation.isPending ? "Generating..." : "Generate Prediction"}
-          </button>
+            <h2 className="mb-9 flex items-center gap-3 text-3xl font-medium text-[#e8f0ff]">
+              <Cpu className="text-[#a8c4ff]" size={26} />
+              Parameter Configuration
+            </h2>
 
-          {/* <div className="mt-12 flex gap-5 rounded-lg border border-[#18304a] bg-[#0d1f33] p-5 text-[#d9e1ef]">
-            <Info className="shrink-0 text-[#4eff93]" size={27} />
-            <p className="text-lg leading-7">
-              Inputs are submitted to the backend prediction endpoint and scored by the loaded model services.
-            </p>
-          </div> */}
-        </form>
+            <div className="grid min-w-0 gap-5 sm:grid-cols-2">
+              <Field label="Latitude">
+                <input
+                  className="prediction-input"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field label="Longitude">
+                <input
+                  className="prediction-input"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  required
+                />
+              </Field>
+            </div>
 
-        {/* ── Right: results ── */}
+            <Field label="Prediction Date" className="mt-8">
+              <div className="relative">
+                <input
+                  className="prediction-input w-full pr-12"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+                <CalendarDays
+                  className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]"
+                  size={25}
+                />
+              </div>
+            </Field>
+
+            <Field label="Time Window" className="mt-8">
+              <div className="relative">
+                <input
+                  className="prediction-input w-full pr-12"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  required
+                />
+                <Clock3
+                  className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]"
+                  size={25}
+                />
+              </div>
+            </Field>
+
+            <button
+              className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg bg-[#a8c4ff] px-5 py-5 text-xl font-black uppercase text-[#102149] shadow-[0_16px_32px_rgba(95,128,200,0.28)] disabled:opacity-70"
+              type="submit"
+              disabled={mutation.isPending || explanationMutation.isPending}
+            >
+              <Rocket size={25} />
+              {mutation.isPending ? "Generating..." : "Generate Prediction"}
+            </button>
+          </form>
+
+          {/* Impact Simulator — below form in left column */}
+          <section className="rounded-xl border border-[#20324a] bg-[#111a29] p-8">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-[#1e3a5f] text-[#a8c4ff]">
+                <Users size={20} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-[#e5eefc]">Impact Simulator</h2>
+                <p className="mt-0.5 text-sm text-[#8e9bb0]">Simulate enforcement deployment effect</p>
+              </div>
+            </div>
+            {prediction ? (
+              <ImpactSimulator
+                curve={prediction.simulation_curve}
+                recommendedOfficers={prediction.recommended_officers}
+                predictedViolations={prediction.predicted_violations}
+                congestionScore={prediction.congestion_score}
+              />
+            ) : (
+              <p className="text-sm text-[#5a6a80]">Generate a prediction to simulate impact.</p>
+            )}
+          </section>
+        </div>
+
+        {/* ── Right column: all results ── */}
         <div className="min-w-0 space-y-8">
           {/* Risk Score Banner */}
           <section className="rounded-xl border-l-4 border-[#ffaaa3] bg-[#191d2a] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8">
@@ -227,7 +246,7 @@ export default function Predictions() {
                 </p>
               </div>
               <button
-                className="w-full rounded-lg border border-[#587197] px-8 py-3 font-mono text-sm font-black uppercase tracking-[0.06em] text-[#d9e5ff] sm:w-auto"
+                className="w-full rounded-lg border border-[#587197] px-8 py-3 font-mono text-sm font-black uppercase tracking-[0.06em] text-[#d9e5ff] lg:w-auto"
                 type="button"
               >
                 Execute
@@ -235,7 +254,7 @@ export default function Predictions() {
             </div>
           </section>
 
-          {/* ── ML Explainability Card ── */}
+          {/* ML Explainability Card */}
           {(explanation || explanationMutation.isPending) && (
             <section className="rounded-xl border border-[#20324a] bg-[#111a29] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
               <div className="mb-6 flex items-center gap-3">
@@ -262,7 +281,11 @@ export default function Predictions() {
               ) : (
                 <div className="space-y-5">
                   {explanation?.drivers.map((driver) => (
-                    <DriverRow key={driver.label} driver={driver} maxImpact={Math.max(...(explanation?.drivers.map((d) => d.impact) ?? [1]))} />
+                    <DriverRow
+                      key={driver.label}
+                      driver={driver}
+                      maxImpact={Math.max(...(explanation?.drivers.map((d) => d.impact) ?? [1]))}
+                    />
                   ))}
                 </div>
               )}
@@ -286,17 +309,76 @@ export default function Predictions() {
   );
 }
 
-// ── Driver Row Component ──────────────────────────────────────────────────────
+// ── Impact Simulator ──────────────────────────────────────────────────────────
+
+function ImpactSimulator({
+  curve,
+  recommendedOfficers,
+  predictedViolations,
+  congestionScore,
+}: {
+  curve: number[];
+  recommendedOfficers: number;
+  predictedViolations: number;
+  congestionScore: number;
+}) {
+  const [officers, setOfficers] = useState(recommendedOfficers);
+  const index = Math.min(Math.max(officers - 1, 0), curve.length - 1);
+  const reductionPct = curve[index] ?? 0;
+  const congestionReduction = roundTo(reductionPct * 0.75, 1);
+  const violationsAfter = roundTo(predictedViolations * (1 - reductionPct / 100), 1);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-mono text-sm uppercase tracking-widest text-[#8e9bb0]">Officers Deployed</span>
+          <span className="text-3xl font-black text-[#a8c4ff]">{officers}</span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={6}
+          value={officers}
+          onChange={(e) => setOfficers(Number(e.target.value))}
+          className="w-full accent-[#a8c4ff]"
+        />
+        <div className="mt-1 flex justify-between font-mono text-xs text-[#5a6a80]">
+          {[1, 2, 3, 4, 5, 6].map((n) => <span key={n}>{n}</span>)}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-lg bg-[#0d1f33] p-4 text-center">
+          <p className="font-mono text-xs uppercase tracking-widest text-[#8e9bb0]">Violations</p>
+          <p className="mt-1 text-2xl font-black text-[#ff8f8f]">↓ {reductionPct.toFixed(0)}%</p>
+          <p className="mt-1 text-xs text-[#5a6a80]">{violationsAfter.toFixed(1)} expected</p>
+        </div>
+        <div className="rounded-lg bg-[#0d1f33] p-4 text-center">
+          <p className="font-mono text-xs uppercase tracking-widest text-[#8e9bb0]">Congestion</p>
+          <p className="mt-1 text-2xl font-black text-[#4add78]">↓ {congestionReduction.toFixed(0)}%</p>
+          <p className="mt-1 text-xs text-[#5a6a80]">{roundTo(congestionScore * (1 - congestionReduction / 100), 1)} score after</p>
+        </div>
+      </div>
+
+      {officers === recommendedOfficers && (
+        <p className="text-center font-mono text-xs font-black uppercase tracking-widest text-[#4eff93]">
+          ✓ AI Recommended Deployment
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Driver Row ────────────────────────────────────────────────────────────────
 
 function DriverRow({ driver, maxImpact }: { driver: ExplanationDriver; maxImpact: number }) {
   const barWidth = `${(driver.impact / maxImpact) * 100}%`;
-
   const colors = {
     increase: { bar: "#ff6b6b", text: "text-[#ff8f8f]", icon: <TrendingUp size={14} /> },
     decrease: { bar: "#4add78", text: "text-[#4add78]", icon: <TrendingDown size={14} /> },
     neutral:  { bar: "#f0c040", text: "text-[#f0c040]", icon: <Minus size={14} /> },
   };
-
   const c = colors[driver.direction];
 
   return (
@@ -360,6 +442,9 @@ function ResultCard({
 function currentDateInput() { return new Date().toISOString().slice(0, 10); }
 function currentTimeInput() { return new Date().toTimeString().slice(0, 5); }
 function formatNumber(value?: number) { return value === undefined ? "--" : value.toLocaleString(); }
+function roundTo(value: number, decimals: number) {
+  return Math.round(value * 10 ** decimals) / 10 ** decimals;
+}
 function riskFromScore(score = 0): "high" | "medium" | "low" {
   if (score >= 70) return "high";
   if (score >= 40) return "medium";

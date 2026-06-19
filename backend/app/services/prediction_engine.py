@@ -39,6 +39,7 @@ class PredictionEngine:
             "congestion_level": congestion_level_from_score(congestion_score),
             "recommended_officers": recommended_officers(risk_score),
             "recommended_tow_trucks": recommended_tow_trucks(congestion_score),
+            "simulation_curve": compute_simulation_curve(risk_score, congestion_score),
         }
 
     def explain(self, latitude: float, longitude: float, timestamp: datetime) -> dict[str, Any]:
@@ -151,5 +152,17 @@ def recommended_tow_trucks(congestion_score: float) -> int:
         return 1
     return 2
 
+def compute_simulation_curve(risk_score: float, congestion_score: float) -> list[float]:
+    """
+    Returns violation reduction % for 1–6 officers.
+    Higher base risk = more room for reduction.
+    """
+    base = (risk_score + congestion_score) / 2
+    curve = []
+    for officers in range(1, 7):
+        # Diminishing returns: each officer adds less than the previous
+        reduction = base * (1 - (0.75 ** officers))
+        curve.append(round(min(reduction, 95.0), 1))
+    return curve
 
 prediction_engine = PredictionEngine()
