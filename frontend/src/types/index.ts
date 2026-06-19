@@ -60,3 +60,15 @@ export type PatrolRecommendation = {
   expected_impact_reduction: number;
   status: string;
 };
+
+export type ExplanationDriver = {
+  label: string;
+  impact: number;
+  direction: "increase" | "decrease" | "neutral";
+  detail: string;
+};
+
+export type ExplanationResponse = {
+  drivers: ExplanationDriver[];
+  summary: string;
+};

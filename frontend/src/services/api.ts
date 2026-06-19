@@ -34,3 +34,8 @@ export async function getPatrolRecommendations() {
   const { data } = await api.get<PatrolRecommendation[]>("/patrol/recommendations");
   return data;
 }
+
+export async function explainPrediction(payload: PredictionRequest) {
+  const { data } = await api.post<ExplanationResponse>("/predict/explain", payload);
+  return data;
+}

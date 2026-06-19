@@ -2,21 +2,22 @@ import { FormEvent, useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   AlertTriangle,
-  Bell,
+  Info,
   CalendarDays,
-  ChevronDown,
   Clock3,
   Cpu,
-  Info,
   Lightbulb,
   RadioTower,
   Rocket,
-  UserCircle2,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from "lucide-react";
 
 import MapView from "../components/MapView";
 import { useHotspots } from "../hooks/useApi";
-import { predictRisk } from "../services/api";
+import { predictRisk, explainPrediction } from "../services/api";
+import type { ExplanationDriver } from "../types";
 
 export default function Predictions() {
   const { data: hotspots = [] } = useHotspots();
@@ -25,12 +26,17 @@ export default function Predictions() {
   const [date, setDate] = useState(currentDateInput());
   const [time, setTime] = useState(currentTimeInput());
   const mutation = useMutation({ mutationFn: predictRisk });
+  const explanationMutation = useMutation({ mutationFn: explainPrediction });
 
   const prediction = mutation.data;
+  const explanation = explanationMutation.data;
   const riskScore = prediction?.risk_score;
   const violations = prediction?.predicted_violations;
   const congestion = prediction?.congestion_score;
-  const selectedMarker = latitude && longitude ? [{ lat: Number(latitude), lng: Number(longitude), risk: riskFromScore(riskScore) }] : [];
+  const selectedMarker =
+    latitude && longitude
+      ? [{ lat: Number(latitude), lng: Number(longitude), risk: riskFromScore(riskScore) }]
+      : [];
 
   useEffect(() => {
     if (latitude || longitude || hotspots.length === 0) return;
@@ -45,21 +51,22 @@ export default function Predictions() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    mutation.mutate({
+    const payload = {
       latitude: Number(latitude),
       longitude: Number(longitude),
       timestamp: `${date}T${time}`,
-    });
+    };
+    mutation.mutate(payload);
+    explanationMutation.mutate(payload);
   }
 
   return (
     <div className="mx-auto max-w-[1220px] pb-10">
       <header className="-mx-4 -mt-5 mb-9 flex min-h-20 items-center justify-between border-b border-[#152439] bg-[#061321] px-8 sm:-mx-6 lg:-mx-8">
         <p className="font-mono text-xl font-black uppercase tracking-[0.12em] text-[#cbd3df]">
-          Control Panel <span className="px-3 text-[#6f7f96]">/</span> <span className="text-[#b8ccff]">Predictions</span>
+          Control Panel <span className="px-3 text-[#6f7f96]">/</span>{" "}
+          <span className="text-[#b8ccff]">Predictions</span>
         </p>
-        <div className="flex items-center gap-6 text-[#d9e3f4]">
-        </div>
       </header>
 
       <section className="mb-10">
@@ -70,7 +77,11 @@ export default function Predictions() {
       </section>
 
       <section className="grid gap-8 xl:grid-cols-[480px_minmax(0,1fr)]">
-        <form className="rounded-xl border border-[#20324a] bg-[#111a29] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)]" onSubmit={onSubmit}>
+        {/* ── Left: form ── */}
+        <form
+          className="rounded-xl border border-[#20324a] bg-[#111a29] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+          onSubmit={onSubmit}
+        >
           <h2 className="mb-9 flex items-center gap-3 text-3xl font-medium text-[#e8f0ff]">
             <Cpu className="text-[#a8c4ff]" size={26} />
             Parameter Configuration
@@ -78,38 +89,59 @@ export default function Predictions() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Latitude">
-              <input className="prediction-input" value={latitude} onChange={(event) => setLatitude(event.target.value)} required />
+              <input
+                className="prediction-input"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                required
+              />
             </Field>
             <Field label="Longitude">
-              <input className="prediction-input" value={longitude} onChange={(event) => setLongitude(event.target.value)} required />
+              <input
+                className="prediction-input"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                required
+              />
             </Field>
           </div>
 
           <Field label="Prediction Date" className="mt-8">
             <div className="relative">
-              <input className="prediction-input w-full pr-12" type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
-              <CalendarDays className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]" size={25} />
+              <input
+                className="prediction-input w-full pr-12"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+              <CalendarDays
+                className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]"
+                size={25}
+              />
             </div>
           </Field>
 
           <Field label="Time Window" className="mt-8">
             <div className="relative">
-              <input className="prediction-input w-full pr-12" type="time" value={time} onChange={(event) => setTime(event.target.value)} required />
-              <Clock3 className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]" size={25} />
+              <input
+                className="prediction-input w-full pr-12"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+              />
+              <Clock3
+                className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#c8d2e3]"
+                size={25}
+              />
             </div>
           </Field>
-
-          {/* <Field label="Model Source" className="mt-8">
-            <button className="prediction-input flex w-full items-center justify-between text-left" type="button">
-              Backend ML Ensemble
-              <ChevronDown className="text-[#8e9bb0]" size={24} />
-            </button>
-          </Field> */}
 
           <button
             className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg bg-[#a8c4ff] px-5 py-5 text-xl font-black uppercase text-[#102149] shadow-[0_16px_32px_rgba(95,128,200,0.28)] disabled:opacity-70"
             type="submit"
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || explanationMutation.isPending}
           >
             <Rocket size={25} />
             {mutation.isPending ? "Generating..." : "Generate Prediction"}
@@ -117,19 +149,29 @@ export default function Predictions() {
 
           <div className="mt-12 flex gap-5 rounded-lg border border-[#18304a] bg-[#0d1f33] p-5 text-[#d9e1ef]">
             <Info className="shrink-0 text-[#4eff93]" size={27} />
-            <p className="text-lg leading-7">Inputs are submitted to the backend prediction endpoint and scored by the loaded model services.</p>
+            <p className="text-lg leading-7">
+              Inputs are submitted to the backend prediction endpoint and scored by the loaded model services.
+            </p>
           </div>
         </form>
 
+        {/* ── Right: results ── */}
         <div className="space-y-8">
+          {/* Risk Score Banner */}
           <section className="rounded-xl border-l-4 border-[#ffaaa3] bg-[#191d2a] p-10 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
             <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
               <div>
                 <div className="flex flex-wrap items-center gap-4">
                   <span className="rounded-full border border-[#9d6f75] bg-[#3a2f3a] px-5 py-3 font-mono text-sm font-black uppercase leading-4 tracking-[0.12em] text-[#ffb1a9]">
-                    {prediction?.risk_level ?? "Awaiting"}<br />Risk
+                    {prediction?.risk_level ?? "Awaiting"}
+                    <br />
+                    Risk
                   </span>
-                  <p className="text-lg text-[#dce3f0]">Model Output:<br />{prediction ? "Backend prediction received" : "Submit parameters to score"}</p>
+                  <p className="text-lg text-[#dce3f0]">
+                    Model Output:
+                    <br />
+                    {prediction ? "Backend prediction received" : "Submit parameters to score"}
+                  </p>
                 </div>
                 <p className="mt-6 text-xl text-[#edf3ff]">Violation Likelihood</p>
                 <div className="mt-6 grid max-w-[390px] grid-cols-2 gap-6 font-mono text-xl font-black uppercase tracking-[0.08em]">
@@ -138,17 +180,39 @@ export default function Predictions() {
                 </div>
               </div>
               <div className="text-center">
-                <strong className="block text-8xl font-black leading-none tracking-[-0.06em] text-[#ffaaa3]">{formatNumber(riskScore)}</strong>
-                <p className="mt-3 font-mono text-lg font-black uppercase tracking-[0.4em] text-[#d7deeb]">Risk Index Score</p>
+                <strong className="block text-8xl font-black leading-none tracking-[-0.06em] text-[#ffaaa3]">
+                  {formatNumber(riskScore)}
+                </strong>
+                <p className="mt-3 font-mono text-lg font-black uppercase tracking-[0.4em] text-[#d7deeb]">
+                  Risk Index Score
+                </p>
               </div>
             </div>
           </section>
 
+          {/* Violations + Congestion cards */}
           <div className="grid gap-8 md:grid-cols-2">
-            <ResultCard icon={<AlertTriangle size={30} />} label="Predicted Violations" value={formatNumber(violations)} suffix="cases" trend={prediction?.risk_level ?? "Awaiting"} tone="blue" fill={riskScore ?? 0} />
-            <ResultCard icon={<RadioTower size={30} />} label="Congestion Impact" value={formatNumber(congestion)} suffix={prediction?.congestion_level ?? "score"} trend="Model score" tone="green" fill={congestion ?? 0} />
+            <ResultCard
+              icon={<AlertTriangle size={30} />}
+              label="Predicted Violations"
+              value={formatNumber(violations)}
+              suffix="cases"
+              trend={prediction?.risk_level ?? "Awaiting"}
+              tone="blue"
+              fill={riskScore ?? 0}
+            />
+            <ResultCard
+              icon={<RadioTower size={30} />}
+              label="Congestion Impact"
+              value={formatNumber(congestion)}
+              suffix={prediction?.congestion_level ?? "score"}
+              trend="Model score"
+              tone="green"
+              fill={congestion ?? 0}
+            />
           </div>
 
+          {/* Recommended Action */}
           <section className="rounded-xl border border-[#385579] border-l-[#a8c4ff] bg-[#0d1f33] p-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
               <div className="grid h-[70px] w-[70px] shrink-0 place-items-center rounded-full bg-[#3a4f6d] text-[#c7d8ff]">
@@ -162,20 +226,64 @@ export default function Predictions() {
                     : "Generate a prediction to receive backend-recommended enforcement resources."}
                 </p>
               </div>
-              <button className="rounded-lg border border-[#587197] px-8 py-3 font-mono text-sm font-black uppercase tracking-[0.06em] text-[#d9e5ff]" type="button">
+              <button
+                className="rounded-lg border border-[#587197] px-8 py-3 font-mono text-sm font-black uppercase tracking-[0.06em] text-[#d9e5ff]"
+                type="button"
+              >
                 Execute
               </button>
             </div>
           </section>
+
+          {/* ── ML Explainability Card ── */}
+          {(explanation || explanationMutation.isPending) && (
+            <section className="rounded-xl border border-[#20324a] bg-[#111a29] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-[#1e3a5f] text-[#a8c4ff]">
+                  <TrendingUp size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-[#e5eefc]">Prediction Drivers</h2>
+                  {explanation?.summary && (
+                    <p className="mt-0.5 text-sm text-[#8e9bb0]">{explanation.summary}</p>
+                  )}
+                </div>
+              </div>
+
+              {explanationMutation.isPending ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="animate-pulse space-y-2">
+                      <div className="h-4 w-1/3 rounded bg-[#1e2d40]" />
+                      <div className="h-2 rounded-full bg-[#1e2d40]" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {explanation?.drivers.map((driver) => (
+                    <DriverRow key={driver.label} driver={driver} maxImpact={Math.max(...(explanation?.drivers.map((d) => d.impact) ?? [1]))} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </section>
 
+      {/* Map */}
       <section className="mt-10 rounded-xl border border-[#172638] bg-[#111a29] p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="font-mono text-2xl font-black uppercase tracking-[0.12em] text-[#e5ecf9]">Spatial Context Preview</h2>
+          <h2 className="font-mono text-2xl font-black uppercase tracking-[0.12em] text-[#e5ecf9]">
+            Spatial Context Preview
+          </h2>
           <div className="flex gap-2">
-            <button className="rounded-md bg-[#28384d] px-4 py-2 font-mono text-sm font-black uppercase text-[#d6deef]" type="button">Heatmap</button>
-            <button className="rounded-md bg-[#a8c4ff] px-4 py-2 font-mono text-sm font-black uppercase text-[#102149]" type="button">Backend Zone</button>
+            <button className="rounded-md bg-[#28384d] px-4 py-2 font-mono text-sm font-black uppercase text-[#d6deef]" type="button">
+              Heatmap
+            </button>
+            <button className="rounded-md bg-[#a8c4ff] px-4 py-2 font-mono text-sm font-black uppercase text-[#102149]" type="button">
+              Backend Zone
+            </button>
           </div>
         </div>
         <div className="mt-6 overflow-hidden rounded-lg border border-[#20324a] bg-[#09182a]">
@@ -185,6 +293,41 @@ export default function Predictions() {
     </div>
   );
 }
+
+// ── Driver Row Component ──────────────────────────────────────────────────────
+
+function DriverRow({ driver, maxImpact }: { driver: ExplanationDriver; maxImpact: number }) {
+  const barWidth = `${(driver.impact / maxImpact) * 100}%`;
+
+  const colors = {
+    increase: { bar: "#ff6b6b", text: "text-[#ff8f8f]", icon: <TrendingUp size={14} /> },
+    decrease: { bar: "#4add78", text: "text-[#4add78]", icon: <TrendingDown size={14} /> },
+    neutral:  { bar: "#f0c040", text: "text-[#f0c040]", icon: <Minus size={14} /> },
+  };
+
+  const c = colors[driver.direction];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-2">
+          <span className={c.text}>{c.icon}</span>
+          <span className="text-sm font-semibold text-[#d1dae9]">{driver.label}</span>
+        </div>
+        <span className={`font-mono text-sm font-black ${c.text}`}>+{driver.impact.toFixed(0)}%</span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-[#0d1f33]">
+        <div
+          className="h-1.5 rounded-full transition-all duration-700"
+          style={{ width: barWidth, backgroundColor: c.bar }}
+        />
+      </div>
+      <p className="mt-1 text-xs text-[#5a6a80]">{driver.detail}</p>
+    </div>
+  );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function Field({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
@@ -196,24 +339,12 @@ function Field({ label, className = "", children }: { label: string; className?:
 }
 
 function ResultCard({
-  icon,
-  label,
-  value,
-  suffix,
-  trend,
-  tone,
-  fill,
+  icon, label, value, suffix, trend, tone, fill,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  suffix: string;
-  trend: string;
-  tone: "blue" | "green";
-  fill: number;
+  icon: React.ReactNode; label: string; value: string | number;
+  suffix: string; trend: string; tone: "blue" | "green"; fill: number;
 }) {
   const color = tone === "blue" ? "#5ba0ff" : "#4add78";
-
   return (
     <article className="rounded-xl border border-[#20324a] bg-[#111a29] p-8">
       <div className="flex items-start justify-between">
@@ -234,18 +365,9 @@ function ResultCard({
   );
 }
 
-function currentDateInput() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function currentTimeInput() {
-  return new Date().toTimeString().slice(0, 5);
-}
-
-function formatNumber(value?: number) {
-  return value === undefined ? "--" : value.toLocaleString();
-}
-
+function currentDateInput() { return new Date().toISOString().slice(0, 10); }
+function currentTimeInput() { return new Date().toTimeString().slice(0, 5); }
+function formatNumber(value?: number) { return value === undefined ? "--" : value.toLocaleString(); }
 function riskFromScore(score = 0): "high" | "medium" | "low" {
   if (score >= 70) return "high";
   if (score >= 40) return "medium";

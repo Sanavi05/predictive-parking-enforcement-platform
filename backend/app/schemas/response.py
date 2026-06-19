@@ -47,3 +47,14 @@ class PatrolRecommendation(BaseModel):
     expected_violations: int
     expected_impact_reduction: float
     status: str
+
+class ExplanationDriver(BaseModel):
+    label: str
+    impact: float
+    direction: str
+    detail: str
+
+
+class ExplanationResponse(BaseModel):
+    drivers: list[ExplanationDriver]
+    summary: str
