@@ -93,7 +93,7 @@ class AnalyticsService:
         return DashboardSummaryResponse(
             critical_zones=sum(1 for zone in hotspots if zone.risk_score >= 80),
             high_risk_zones=sum(1 for zone in hotspots if 60 <= zone.risk_score < 80),
-            expected_violations_today=int(analytics.total_violations),
+            expected_violations_today=round(analytics.total_violations / 134),
             average_congestion_score=round(
                 min(100.0, sum(zone.risk_score for zone in hotspots) / max(len(hotspots), 1) * 0.75),
                 2,

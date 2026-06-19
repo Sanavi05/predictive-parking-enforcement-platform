@@ -37,6 +37,16 @@ class DashboardSummaryResponse(BaseModel):
     average_congestion_score: float
 
 
+class PatrolRouteStop(BaseModel):
+    sequence: int
+    h3_cell: str
+    junction_name: str
+    priority_score: float
+    risk_score: float
+    congestion_impact: float
+    expected_violations: int
+
+
 class PatrolRecommendation(BaseModel):
     officer_id: str
     assigned_h3_cell: str
@@ -47,6 +57,8 @@ class PatrolRecommendation(BaseModel):
     expected_violations: int
     expected_impact_reduction: float
     status: str
+    route: list[PatrolRouteStop]
+    route_summary: str
 
 class ExplanationDriver(BaseModel):
     label: str

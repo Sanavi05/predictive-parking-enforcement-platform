@@ -50,6 +50,16 @@ export type DashboardSummaryResponse = {
   average_congestion_score: number;
 };
 
+export type PatrolRouteStop = {
+  sequence: number;
+  h3_cell: string;
+  junction_name: string;
+  priority_score: number;
+  risk_score: number;
+  congestion_impact: number;
+  expected_violations: number;
+};
+
 export type PatrolRecommendation = {
   officer_id: string;
   assigned_h3_cell: string;
@@ -60,6 +70,8 @@ export type PatrolRecommendation = {
   expected_violations: number;
   expected_impact_reduction: number;
   status: string;
+  route: PatrolRouteStop[];
+  route_summary: string;
 };
 
 export type ExplanationDriver = {

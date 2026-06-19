@@ -19,7 +19,8 @@ export default function Dashboard() {
   const { data: hotspots = [], isLoading: hotspotsLoading } = useHotspots();
   const { data: patrolRecommendations = [] } = usePatrolRecommendations();
 
-  const totalViolations = summary?.expected_violations_today ?? analytics?.total_violations;
+  const historicalViolations = analytics?.total_violations;
+  const todayPredictedViolations = summary?.expected_violations_today;
   const congestion = summary?.average_congestion_score;
   const activeHotspots = summary ? summary.critical_zones + summary.high_risk_zones : undefined;
   const mapMarkers = hotspots.map(toMapMarker);
@@ -30,8 +31,22 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-[1220px] pb-6">
-      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <MetricTile label="Total Violations" value={formatNumber(totalViolations)} delta={isLoading ? "Loading" : "Backend"} deltaTone="neutral" icon={<ShieldAlert size={17} />} />
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+      <MetricTile
+          label="Historical Violations"
+          value={formatNumber(historicalViolations)}
+          delta={isLoading ? "Loading" : "Source data"}
+          deltaTone="neutral"
+          icon={<ShieldAlert size={17} />}
+        />
+
+        <MetricTile
+          label="Today's Predicted Violations"
+          value={formatNumber(todayPredictedViolations)}
+          delta={isLoading ? "Loading" : "ML forecast"}
+          deltaTone="neutral"
+          icon={<TrendingUp size={17} />}
+        />
         <MetricTile label="Active Hotspots" value={formatNumber(activeHotspots)} delta={summary ? `${summary.critical_zones} critical` : "Loading"} deltaTone="neutral" icon={<Flame size={17} />} />
         <MetricTile label="Avg Congestion" value={formatPercent(congestion)} delta={hotspots.length ? `${hotspots.length} zones` : "Loading"} deltaTone="neutral" icon={<ChartNoAxesColumn size={17} />} />
         <MetricTile label="Expected Impact" value={formatPercent(expectedImpact)} delta={patrolRecommendations.length ? "Patrol model" : "Loading"} deltaTone="neutral" icon={<Zap size={17} />} />
