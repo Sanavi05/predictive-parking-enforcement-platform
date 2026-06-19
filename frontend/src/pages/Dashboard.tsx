@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-[1220px] pb-6">
-      <section className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <MetricTile label="Total Violations" value={formatNumber(totalViolations)} delta={isLoading ? "Loading" : "Backend"} deltaTone="neutral" icon={<ShieldAlert size={17} />} />
         <MetricTile label="Active Hotspots" value={formatNumber(activeHotspots)} delta={summary ? `${summary.critical_zones} critical` : "Loading"} deltaTone="neutral" icon={<Flame size={17} />} />
         <MetricTile label="Avg Congestion" value={formatPercent(congestion)} delta={hotspots.length ? `${hotspots.length} zones` : "Loading"} deltaTone="neutral" icon={<ChartNoAxesColumn size={17} />} />
@@ -72,9 +72,9 @@ export default function Dashboard() {
               </article>
             )) : <EmptyState message="No hotspot alerts returned by the backend yet." />}
           </div>
-          <button className="w-full border-t border-[#1d2b3d] py-4 font-mono text-sm font-black uppercase tracking-[0.12em] text-[#d6e3ff]" type="button">
+          {/* <button className="w-full border-t border-[#1d2b3d] py-4 font-mono text-sm font-black uppercase tracking-[0.12em] text-[#d6e3ff]" type="button">
             View System Logs
-          </button>
+          </button> */}
         </aside>
       </section>
 
@@ -84,10 +84,6 @@ export default function Dashboard() {
             <ChartNoAxesColumn className="rounded bg-[#a9c7ff] p-1 text-[#0d1a2b]" size={25} />
             Top Hotspots Forecast
           </h2>
-          <div className="flex gap-2">
-            <button className="rounded-md border border-[#20324a] px-4 py-2 text-sm text-[#dfe8f8]" type="button">Daily</button>
-            <button className="rounded-md bg-[#a9c7ff] px-4 py-2 text-sm font-bold text-[#0d1a2b]" type="button">Hourly</button>
-          </div>
         </div>
         <div className="overflow-x-auto px-8 pb-6">
           <table className="w-full min-w-[780px] text-left">
@@ -138,7 +134,7 @@ function buildAlerts(hotspots: Hotspot[]) {
     const score = Math.round(hotspot.risk_score ?? 0);
     return {
       title: hotspot.zone_name ?? coordinateLabel(hotspot),
-      time: "Backend",
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       message: `${score}% risk score with ${violations.toLocaleString()} observed violations in the source data.`,
       tone: risk === "high" ? "high" : risk === "medium" ? "clear" : "idle",
     };
@@ -220,15 +216,15 @@ function MetricTile({
   icon: React.ReactNode;
 }) {
   return (
-    <article className="rounded-xl border border-[#1e2b3d] bg-[#111a29] p-7 shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-sm font-bold uppercase tracking-[0.14em] text-[#c7cedc]">{label}</p>
+    <article className="min-w-0 rounded-xl border border-[#1e2b3d] bg-[#111a29] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 break-words font-mono text-sm font-bold uppercase tracking-[0.08em] text-[#c7cedc]">{label}</p>
         <span className="text-[#8ea0bf]">{icon}</span>
       </div>
-      <div className="mt-4 flex items-end justify-between gap-3">
-        <strong className="text-4xl font-black leading-none tracking-[-0.03em] text-[#dce8fb]">{value}</strong>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <strong className="min-w-0 break-words text-3xl font-black leading-none tracking-[-0.02em] text-[#dce8fb]">{value}</strong>
         <span
-          className={`font-mono text-sm font-black ${
+          className={`min-w-0 break-words font-mono text-sm font-black ${
             deltaTone === "good" ? "text-[#4eff93]" : deltaTone === "bad" ? "text-[#ffaaa3]" : "text-[#e2e8f6]"
           }`}
         >

@@ -1,5 +1,5 @@
-import { BarChart3, Grid2X2, RadioTower, Route as RouteIcon, SquareActivity } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { BarChart3, Grid2X2, RadioTower, Route as RouteIcon } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const links = [
   { to: "/", label: "Dashboard", icon: Grid2X2 },
@@ -9,19 +9,14 @@ const links = [
 ];
 
 export default function Navbar() {
-  const { pathname } = useLocation();
-  const isPatrol = pathname === "/patrol";
-  const isPredictions = pathname === "/predictions";
-  const isAnalytics = pathname === "/analytics";
   // const footerName = isPatrol ? "Cmdr. Sterling" : isPredictions ? "Org Admin" : isAnalytics ? "Command Center 01" : "Admin Console";
   // const footerSubtitle = isPatrol ? "Sector Lead" : isPredictions ? "Metro Control Center" : isAnalytics ? "Super Admin" : "Active Session";
 
   return (
-    <aside className="border-b border-[#1f2b3d] bg-[#111f2f] lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-[350px] lg:flex-col lg:border-b-0 lg:border-r">
+    <aside className="border-b border-[#1f2b3d] bg-[#111f2f] lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-[260px] lg:flex-col lg:border-b-0 lg:border-r">
       <nav className="flex flex-col gap-5 px-4 py-4 sm:px-6 lg:h-full lg:px-0 lg:py-0">
-        <div className="px-0 lg:px-[30px] lg:pt-8">
-          <h1 className="text-[32px] font-black leading-none tracking-[-0.01em] text-[#dfeaff]">ParkSight AI</h1>
-          <p className="mt-2 text-lg text-[#a8b3c7]">Infrastructure Control</p>
+        <div className="px-0 lg:px-6 lg:pt-8">
+          <h1 className="text-[28px] font-black leading-none tracking-[-0.01em] text-[#dfeaff]">ParkSight AI</h1>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 lg:mt-9 lg:flex-col lg:gap-3 lg:overflow-visible lg:pb-0">
@@ -30,7 +25,7 @@ export default function Navbar() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex min-w-max items-center gap-4 border-l-4 px-5 py-4 text-lg font-bold text-[#cdd6e8] transition lg:mx-[14px] ${
+                `flex min-w-max items-center gap-4 border-l-4 px-5 py-4 text-lg font-bold text-[#cdd6e8] transition lg:mx-3 lg:min-w-0 lg:px-4 ${
                   isActive
                     ? "border-[#a8c4ff] bg-[#253751] text-[#c6d9ff]"
                     : "border-transparent hover:bg-[#18283c] hover:text-white"

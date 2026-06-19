@@ -10,7 +10,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#07111e] text-slate-100">
       <Navbar />
-      <main className="px-4 py-5 sm:px-6 lg:ml-[350px] lg:px-8">
+      <main className="min-w-0 px-4 py-5 sm:px-6 lg:ml-[260px] lg:px-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/analytics" element={<Analytics />} />

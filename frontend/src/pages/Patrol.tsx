@@ -1,14 +1,12 @@
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
-  Bell,
-  Bot,
   CheckCircle2,
   Clock3,
   Filter,
   MoreVertical,
   Search,
   Send,
-  Settings,
   WandSparkles,
 } from "lucide-react";
 
@@ -17,11 +15,47 @@ import type { PatrolRecommendation } from "../types";
 
 export default function Patrol() {
   const { data = [], isLoading } = usePatrolRecommendations();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [riskFilter, setRiskFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, AssignmentStatus>>({});
   const activePatrols = data.length;
   const meanPriority = average(data.map((item) => item.priority_score));
   const meanRisk = average(data.map((item) => item.risk_score));
   const expectedViolations = data.reduce((sum, item) => sum + item.expected_violations, 0);
-  const assignments = data.map(toAssignment);
+  const assignments = useMemo(
+    () => data.map((item) => toAssignment(item, statusOverrides[item.officer_id])),
+    [data, statusOverrides],
+  );
+  const visibleAssignments = assignments.filter((assignment) => {
+    const query = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      assignment.officer.toLowerCase().includes(query) ||
+      assignment.area.toLowerCase().includes(query) ||
+      assignment.zone.toLowerCase().includes(query);
+    const matchesRisk = riskFilter === "all" || assignment.riskTone === riskFilter;
+    const matchesStatus = statusFilter === "all" || assignment.status === statusFilter;
+    return matchesSearch && matchesRisk && matchesStatus;
+  });
+
+  function updateStatus(officer: string, status: AssignmentStatus) {
+    setStatusOverrides((current) => ({ ...current, [officer]: status }));
+    setOpenActionMenu(null);
+  }
+
+  function deployVisibleAssignments() {
+    setStatusOverrides((current) => {
+      const next = { ...current };
+      visibleAssignments.forEach((assignment) => {
+        if (assignment.status !== "completed") next[assignment.officer] = "deployed";
+      });
+      return next;
+    });
+    setOpenActionMenu(null);
+  }
 
   return (
     <div className="mx-auto max-w-[1220px] pb-12">
@@ -29,21 +63,9 @@ export default function Patrol() {
         <div className="flex flex-wrap items-center gap-7">
           <h1 className="text-3xl font-black tracking-[-0.02em] text-[#e8f0ff]">Patrol Planner</h1>
         </div>
-
-        <div className="flex flex-1 items-center justify-end gap-5">
-          <label className="relative hidden w-full max-w-[320px] md:block">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a7b3c7]" size={18} />
-            <input
-              className="h-12 w-full rounded-lg border border-[#20324a] bg-[#111f2f] pl-12 pr-4 text-[#dbe5f5] outline-none placeholder:text-[#8390a4] focus:border-[#9ebcff]"
-              placeholder="Filter assignments..."
-              type="search"
-            />
-          </label>
-
-        </div>
       </header>
 
-      <section className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <PlannerMetric label="Active Patrols" value={formatNumber(activePatrols)} detail={isLoading ? "Loading" : "Backend"} detailTone="neutral" />
         <PlannerMetric label="Mean Priority" value={formatPercent(meanPriority)} detail="Model score" detailTone="neutral" />
         <PlannerMetric label="Mean Risk" value={formatPercent(meanRisk)} detail="Hotspot score" detailTone="neutral" />
@@ -56,65 +78,140 @@ export default function Patrol() {
             <h2 className="text-3xl font-medium tracking-[-0.02em] text-[#e8f0ff]">Recommended Patrol Assignments</h2>
             <p className="mt-1 text-lg text-[#d8dfed]">Real-time dynamic task allocation based on predictive risk modeling.</p>
           </div>
-          <div className="flex gap-3">
-            <button className="inline-flex items-center gap-3 rounded-lg bg-[#2b3b52] px-5 py-3 text-lg font-bold text-[#dce6f7]" type="button">
+          <div className="flex flex-wrap gap-3">
+            <button
+              className={`inline-flex items-center gap-3 rounded-lg px-5 py-3 text-lg font-bold text-[#dce6f7] ${filtersOpen ? "bg-[#3b5272]" : "bg-[#2b3b52]"}`}
+              type="button"
+              onClick={() => setFiltersOpen((open) => !open)}
+              aria-pressed={filtersOpen}
+            >
               <Filter size={18} />
               Filter
             </button>
-            <button className="inline-flex items-center gap-3 rounded-lg bg-[#a8c4ff] px-5 py-3 text-lg font-black text-[#102149] shadow-[0_14px_28px_rgba(95,128,200,0.3)]" type="button">
+            <button
+              className="inline-flex items-center gap-3 rounded-lg bg-[#a8c4ff] px-5 py-3 text-lg font-black text-[#102149] shadow-[0_14px_28px_rgba(95,128,200,0.3)] disabled:cursor-not-allowed disabled:opacity-55"
+              type="button"
+              onClick={deployVisibleAssignments}
+              disabled={!visibleAssignments.length}
+            >
               <Send size={17} />
               Deploy All
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1060px] text-left">
-            <thead className="bg-[#172638] font-mono text-sm uppercase tracking-[0.14em] text-[#d1dae9]">
+        {filtersOpen && (
+          <div className="grid gap-4 border-t border-[#16283b] bg-[#0d1d2d] px-8 py-5 md:grid-cols-[minmax(220px,1fr)_190px_190px_auto]">
+            <label className="relative block">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a7b3c7]" size={18} />
+              <input
+                className="h-12 w-full rounded-lg border border-[#20324a] bg-[#111f2f] pl-12 pr-4 text-[#dbe5f5] outline-none placeholder:text-[#8390a4] focus:border-[#9ebcff]"
+                placeholder="Search officer or area..."
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </label>
+            <select
+              className="h-12 rounded-lg border border-[#20324a] bg-[#111f2f] px-4 font-mono text-sm font-bold uppercase text-[#dbe5f5] outline-none focus:border-[#9ebcff]"
+              value={riskFilter}
+              onChange={(event) => setRiskFilter(event.target.value)}
+              aria-label="Filter by risk"
+            >
+              <option value="all">All risks</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="elevated">Elevated</option>
+              <option value="moderate">Moderate</option>
+              <option value="nominal">Nominal</option>
+            </select>
+            <select
+              className="h-12 rounded-lg border border-[#20324a] bg-[#111f2f] px-4 font-mono text-sm font-bold uppercase text-[#dbe5f5] outline-none focus:border-[#9ebcff]"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label="Filter by status"
+            >
+              <option value="all">All status</option>
+              <option value="recommended">Pending deploy</option>
+              <option value="deployed">Deployed</option>
+              <option value="completed">Completed</option>
+            </select>
+            <button
+              className="rounded-lg border border-[#2c405c] px-4 font-mono text-sm font-black uppercase text-[#dbe5f5]"
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setRiskFilter("all");
+                setStatusFilter("all");
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        <div className="overflow-hidden">
+          <table className="w-full table-fixed text-left">
+            <thead className="bg-[#172638] font-mono text-xs uppercase tracking-[0.08em] text-[#d1dae9]">
               <tr>
-                <th className="px-8 py-6">Officer ID</th>
-                <th className="px-8 py-6">Assigned Area</th>
-                <th className="px-8 py-6 text-center">Priority Score</th>
-                <th className="px-8 py-6">Risk Level</th>
-                <th className="px-8 py-6">Status</th>
-                <th className="px-8 py-6 text-right">Actions</th>
+                <th className="w-[14%] px-4 py-5">Officer ID</th>
+                <th className="w-[30%] px-4 py-5">Assigned Area</th>
+                <th className="w-[16%] px-4 py-5 text-center">Priority Score</th>
+                <th className="w-[17%] px-4 py-5">Risk Level</th>
+                <th className="w-[15%] px-4 py-5">Status</th>
+                <th className="w-[8%] px-4 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {assignments.length > 0 ? (
-                assignments.map((assignment, index) => (
+              {visibleAssignments.length > 0 ? (
+                visibleAssignments.map((assignment, index) => (
                   <tr
                     key={assignment.officer}
                     className={`border-b border-[#172638] ${index < 2 ? "bg-[#141827]" : "bg-[#0d1d2d]"} ${index === 0 ? "border-l-4 border-l-[#ffaaa3]" : ""}`}
                   >
-                    <td className="px-8 py-7 font-mono text-xl leading-8 tracking-[0.08em] text-[#e3ebfa]">
+                    <td className="px-4 py-6 font-mono text-base leading-7 tracking-[0.04em] text-[#e3ebfa]">
                       {assignment.officer.replace("-", "-\n").split("\n").map((line) => (
                         <span className="block" key={line}>{line}</span>
                       ))}
                     </td>
-                    <td className="px-8 py-7">
-                      <p className="max-w-[250px] text-2xl font-black leading-snug text-[#e8f0ff]">{assignment.area}</p>
-                      <p className="mt-3 text-base text-[#c7cedd]">{assignment.zone}</p>
+                    <td className="px-4 py-6">
+                      <p className="break-words text-xl font-black leading-snug text-[#e8f0ff]">{assignment.area}</p>
+                      <p className="mt-3 break-words text-sm text-[#c7cedd]">{assignment.zone}</p>
                     </td>
-                    <td className="px-8 py-7 text-center">
+                    <td className="px-4 py-6 text-center">
                       <PriorityGauge value={assignment.priority} tone={assignment.riskTone} />
                     </td>
-                    <td className="px-8 py-7">
+                    <td className="px-4 py-6">
                       <RiskBadge label={assignment.risk} tone={assignment.riskTone} />
                     </td>
-                    <td className="px-8 py-7">
-                      <StatusLabel label={assignment.status} tone={assignment.statusTone} />
+                    <td className="px-4 py-6">
+                      <StatusLabel label={assignment.statusLabel} tone={assignment.statusTone} />
                     </td>
-                    <td className="px-8 py-7 text-right">
-                      <button className="inline-grid h-10 w-10 place-items-center rounded-md text-[#cbd6e8] hover:bg-white/5" type="button" aria-label={`Actions for ${assignment.officer}`}>
+                    <td className="relative px-4 py-6 text-right">
+                      <button
+                        className="inline-grid h-10 w-10 place-items-center rounded-md text-[#cbd6e8] hover:bg-white/5"
+                        type="button"
+                        aria-label={`Actions for ${assignment.officer}`}
+                        aria-expanded={openActionMenu === assignment.officer}
+                        onClick={() => setOpenActionMenu((current) => current === assignment.officer ? null : assignment.officer)}
+                      >
                         <MoreVertical size={25} />
                       </button>
+                      {openActionMenu === assignment.officer && (
+                        <div className="absolute right-4 top-16 z-30 w-40 overflow-hidden rounded-lg border border-[#2c405c] bg-[#071321] text-left shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
+                          <ActionMenuButton label="Deploy" onClick={() => updateStatus(assignment.officer, "deployed")} />
+                          <ActionMenuButton label="Complete" onClick={() => updateStatus(assignment.officer, "completed")} />
+                          <ActionMenuButton label="Reset" onClick={() => updateStatus(assignment.officer, "recommended")} />
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td className="px-8 py-10 text-center text-[#d8dfed]" colSpan={6}>No patrol recommendations returned by the backend yet.</td>
+                  <td className="px-8 py-10 text-center text-[#d8dfed]" colSpan={6}>
+                    {assignments.length ? "No patrol assignments match the current filters." : "No patrol recommendations returned by the backend yet."}
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -125,8 +222,11 @@ export default function Patrol() {
   );
 }
 
-function toAssignment(recommendation: PatrolRecommendation) {
+type AssignmentStatus = "recommended" | "deployed" | "completed";
+
+function toAssignment(recommendation: PatrolRecommendation, statusOverride?: AssignmentStatus) {
   const riskTone = riskToneFromScore(recommendation.risk_score);
+  const status = statusOverride ?? normalizeStatus(recommendation.status);
   return {
     officer: recommendation.officer_id,
     area: recommendation.junction_name,
@@ -134,9 +234,38 @@ function toAssignment(recommendation: PatrolRecommendation) {
     priority: Math.round(recommendation.priority_score),
     risk: `${riskLabel(recommendation.risk_score)} - ${Math.round(recommendation.risk_score)}%`,
     riskTone,
-    status: recommendation.status,
-    statusTone: recommendation.status === "recommended" ? "scheduled" : "ready",
+    status,
+    statusLabel: statusLabel(status),
+    statusTone: statusTone(status),
   };
+}
+
+function ActionMenuButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      className="block w-full px-4 py-3 text-left text-sm font-bold text-[#dbe5f5] hover:bg-[#18283c]"
+      type="button"
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+}
+
+function normalizeStatus(status: string): AssignmentStatus {
+  if (status === "deployed" || status === "completed") return status;
+  return "recommended";
+}
+
+function statusLabel(status: AssignmentStatus) {
+  if (status === "deployed") return "Deployed";
+  if (status === "completed") return "Completed";
+  return "Pending deploy";
+}
+
+function statusTone(status: AssignmentStatus) {
+  if (status === "recommended") return "scheduled";
+  return "ready";
 }
 
 function PlannerMetric({
@@ -153,13 +282,13 @@ function PlannerMetric({
   emphasized?: boolean;
 }) {
   return (
-    <article className={`rounded-xl border bg-[#111f2f] p-8 ${emphasized ? "border-[#466188]" : "border-[#20324a]"}`}>
+    <article className={`min-w-0 rounded-xl border bg-[#111f2f] p-5 ${emphasized ? "border-[#466188]" : "border-[#20324a]"}`}>
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-sm uppercase tracking-[0.16em] text-[#d1dae9]">{label}</p>
-          <div className="mt-4 flex items-end gap-3">
-            <strong className="text-4xl font-black uppercase leading-none tracking-[0.04em] text-[#dce8fb]">{value}</strong>
-            {detail && <span className={detailTone === "good" ? "pb-1 text-sm font-bold text-[#4eff93]" : "pb-1 text-base text-[#d8dfed]"}>{detail}</span>}
+        <div className="min-w-0">
+          <p className="break-words font-mono text-sm uppercase tracking-[0.08em] text-[#d1dae9]">{label}</p>
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <strong className="break-words text-3xl font-black uppercase leading-none tracking-[0.02em] text-[#dce8fb]">{value}</strong>
+            {detail && <span className={detailTone === "good" ? "break-words pb-1 text-sm font-bold text-[#4eff93]" : "break-words pb-1 text-base text-[#d8dfed]"}>{detail}</span>}
           </div>
         </div>
         {emphasized && <WandSparkles className="mt-10 text-[#a8c4ff]" size={24} />}
@@ -172,7 +301,7 @@ function PriorityGauge({ value, tone }: { value: number; tone: string }) {
   const color = tone === "elevated" ? "#ff7417" : tone === "moderate" ? "#ffd21e" : tone === "nominal" ? "#4add78" : "#ffaaa3";
 
   return (
-    <div className="mx-auto w-[120px]">
+    <div className="mx-auto w-full max-w-[100px]">
       <p className="text-2xl font-black" style={{ color }}>{value}</p>
       <div className="mt-3 h-2 rounded-full bg-[#2a3a4c]">
         <div className="h-2 rounded-full" style={{ width: `${value}%`, backgroundColor: color }} />
@@ -191,7 +320,7 @@ function RiskBadge({ label, tone }: { label: string; tone: string }) {
   }[tone];
 
   return (
-    <span className={`inline-flex min-w-[132px] items-center gap-3 rounded-full px-4 py-3 text-sm font-black uppercase ${classes}`}>
+    <span className={`inline-flex max-w-full items-center gap-2 rounded-full px-3 py-3 text-xs font-black uppercase ${classes}`}>
       <span className="h-2 w-2 rounded-full bg-white" />
       {label}
     </span>
@@ -209,7 +338,7 @@ function StatusLabel({ label, tone }: { label: string; tone: string }) {
     );
 
   return (
-    <span className="inline-flex max-w-[170px] items-center gap-3 text-lg text-[#e5ecf9]">
+    <span className="inline-flex max-w-full items-center gap-2 break-words text-base text-[#e5ecf9]">
       {icon}
       {label}
     </span>

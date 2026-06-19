@@ -76,10 +76,10 @@ export default function Predictions() {
         </p>
       </section>
 
-      <section className="grid gap-8 xl:grid-cols-[480px_minmax(0,1fr)]">
+      <section className="grid items-start gap-8 xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
         {/* ── Left: form ── */}
         <form
-          className="rounded-xl border border-[#20324a] bg-[#111a29] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+          className="min-w-0 self-start rounded-xl border border-[#20324a] bg-[#111a29] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8"
           onSubmit={onSubmit}
         >
           <h2 className="mb-9 flex items-center gap-3 text-3xl font-medium text-[#e8f0ff]">
@@ -87,7 +87,7 @@ export default function Predictions() {
             Parameter Configuration
           </h2>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-5 sm:grid-cols-2">
             <Field label="Latitude">
               <input
                 className="prediction-input"
@@ -147,20 +147,20 @@ export default function Predictions() {
             {mutation.isPending ? "Generating..." : "Generate Prediction"}
           </button>
 
-          <div className="mt-12 flex gap-5 rounded-lg border border-[#18304a] bg-[#0d1f33] p-5 text-[#d9e1ef]">
+          {/* <div className="mt-12 flex gap-5 rounded-lg border border-[#18304a] bg-[#0d1f33] p-5 text-[#d9e1ef]">
             <Info className="shrink-0 text-[#4eff93]" size={27} />
             <p className="text-lg leading-7">
               Inputs are submitted to the backend prediction endpoint and scored by the loaded model services.
             </p>
-          </div>
+          </div> */}
         </form>
 
         {/* ── Right: results ── */}
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           {/* Risk Score Banner */}
-          <section className="rounded-xl border-l-4 border-[#ffaaa3] bg-[#191d2a] p-10 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-            <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
-              <div>
+          <section className="rounded-xl border-l-4 border-[#ffaaa3] bg-[#191d2a] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8">
+            <div className="grid min-w-0 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(170px,auto)]">
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-4">
                   <span className="rounded-full border border-[#9d6f75] bg-[#3a2f3a] px-5 py-3 font-mono text-sm font-black uppercase leading-4 tracking-[0.12em] text-[#ffb1a9]">
                     {prediction?.risk_level ?? "Awaiting"}
@@ -170,20 +170,20 @@ export default function Predictions() {
                   <p className="text-lg text-[#dce3f0]">
                     Model Output:
                     <br />
-                    {prediction ? "Backend prediction received" : "Submit parameters to score"}
+                    {prediction ? "Prediction received" : "Submit parameters to score"}
                   </p>
                 </div>
                 <p className="mt-6 text-xl text-[#edf3ff]">Violation Likelihood</p>
-                <div className="mt-6 grid max-w-[390px] grid-cols-2 gap-6 font-mono text-xl font-black uppercase tracking-[0.08em]">
-                  <span className="text-[#dce3f0]">Current<br />Risk:</span>
-                  <span className="text-[#ffb1a9]">{prediction?.risk_level ?? "--"}<br />Threshold</span>
+                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-xl font-black uppercase tracking-[0.06em]">
+                  <span className="text-[#dce3f0]">Current Risk:</span>
+                  <span className="break-words text-[#ffb1a9]">{prediction?.risk_level ?? "--"} Threshold</span>
                 </div>
               </div>
-              <div className="text-center">
-                <strong className="block text-8xl font-black leading-none tracking-[-0.06em] text-[#ffaaa3]">
+              <div className="min-w-0 text-center">
+                <strong className="block break-words text-6xl font-black leading-none tracking-[-0.04em] text-[#ffaaa3] sm:text-7xl">
                   {formatNumber(riskScore)}
                 </strong>
-                <p className="mt-3 font-mono text-lg font-black uppercase tracking-[0.4em] text-[#d7deeb]">
+                <p className="mt-3 break-words font-mono text-base font-black uppercase tracking-[0.2em] text-[#d7deeb]">
                   Risk Index Score
                 </p>
               </div>
@@ -214,11 +214,11 @@ export default function Predictions() {
 
           {/* Recommended Action */}
           <section className="rounded-xl border border-[#385579] border-l-[#a8c4ff] bg-[#0d1f33] p-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
               <div className="grid h-[70px] w-[70px] shrink-0 place-items-center rounded-full bg-[#3a4f6d] text-[#c7d8ff]">
                 <Lightbulb size={35} />
               </div>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <h2 className="text-2xl font-black text-[#c7d8ff]">Recommended Action</h2>
                 <p className="mt-3 max-w-[560px] text-lg leading-7 text-[#e0e6f2]">
                   {prediction
@@ -227,7 +227,7 @@ export default function Predictions() {
                 </p>
               </div>
               <button
-                className="rounded-lg border border-[#587197] px-8 py-3 font-mono text-sm font-black uppercase tracking-[0.06em] text-[#d9e5ff]"
+                className="w-full rounded-lg border border-[#587197] px-8 py-3 font-mono text-sm font-black uppercase tracking-[0.06em] text-[#d9e5ff] sm:w-auto"
                 type="button"
               >
                 Execute
@@ -277,14 +277,6 @@ export default function Predictions() {
           <h2 className="font-mono text-2xl font-black uppercase tracking-[0.12em] text-[#e5ecf9]">
             Spatial Context Preview
           </h2>
-          <div className="flex gap-2">
-            <button className="rounded-md bg-[#28384d] px-4 py-2 font-mono text-sm font-black uppercase text-[#d6deef]" type="button">
-              Heatmap
-            </button>
-            <button className="rounded-md bg-[#a8c4ff] px-4 py-2 font-mono text-sm font-black uppercase text-[#102149]" type="button">
-              Backend Zone
-            </button>
-          </div>
         </div>
         <div className="mt-6 overflow-hidden rounded-lg border border-[#20324a] bg-[#09182a]">
           <MapView markers={selectedMarker} />
@@ -331,7 +323,7 @@ function DriverRow({ driver, maxImpact }: { driver: ExplanationDriver; maxImpact
 
 function Field({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
-    <label className={`block ${className}`}>
+    <label className={`block min-w-0 ${className}`}>
       <span className="mb-3 block font-mono text-sm uppercase tracking-[0.12em] text-[#d1dae9]">{label}</span>
       {children}
     </label>
@@ -346,19 +338,19 @@ function ResultCard({
 }) {
   const color = tone === "blue" ? "#5ba0ff" : "#4add78";
   return (
-    <article className="rounded-xl border border-[#20324a] bg-[#111a29] p-8">
-      <div className="flex items-start justify-between">
+    <article className="min-w-0 rounded-xl border border-[#20324a] bg-[#111a29] p-6">
+      <div className="flex items-start justify-between gap-3">
         <span className={`grid h-12 w-12 place-items-center rounded-lg ${tone === "blue" ? "bg-[#182f56] text-[#5ba0ff]" : "bg-[#153a31] text-[#4add78]"}`}>
           {icon}
         </span>
-        <span className="font-mono text-sm font-black text-[#d5ddeb]">{trend}</span>
+        <span className="min-w-0 break-words text-right font-mono text-sm font-black text-[#d5ddeb]">{trend}</span>
       </div>
-      <p className="mt-20 font-mono text-sm uppercase tracking-[0.12em] text-[#d1dae9]">{label}</p>
-      <div className="mt-3 flex items-end gap-3">
-        <strong className="text-4xl font-black tracking-[-0.03em] text-[#e5eefc]">{value}</strong>
-        <span className="pb-1 text-lg font-bold text-[#d1dae9]">{suffix}</span>
+      <p className="mt-14 break-words font-mono text-sm uppercase tracking-[0.08em] text-[#d1dae9]">{label}</p>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <strong className="break-words text-3xl font-black tracking-[-0.02em] text-[#e5eefc]">{value}</strong>
+        <span className="break-words pb-1 text-base font-bold text-[#d1dae9]">{suffix}</span>
       </div>
-      <div className="mt-24 h-2 rounded-full bg-[#071321]">
+      <div className="mt-16 h-2 rounded-full bg-[#071321]">
         <div className="h-2 rounded-full" style={{ width: `${Math.min(Math.max(fill, 0), 100)}%`, backgroundColor: color }} />
       </div>
     </article>

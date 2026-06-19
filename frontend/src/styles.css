@@ -17,5 +17,5 @@ body {
 }
 
 .prediction-input {
-  @apply h-[62px] rounded-lg border border-[#40516a] bg-[#061321] px-5 font-mono text-xl font-black tracking-[0.08em] text-[#e5ecf9] outline-none transition placeholder:text-[#8390a4] focus:border-[#a8c4ff];
+  @apply h-[62px] w-full min-w-0 rounded-lg border border-[#40516a] bg-[#061321] px-5 font-mono text-lg font-black tracking-[0.06em] text-[#e5ecf9] outline-none transition placeholder:text-[#8390a4] focus:border-[#a8c4ff];
 }

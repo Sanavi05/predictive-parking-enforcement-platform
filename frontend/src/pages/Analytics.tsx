@@ -24,7 +24,7 @@ export default function Analytics() {
   const activePatrols = patrolRecommendations.length;
 
   return (
-    <div className="mx-auto max-w-[1040px] pb-10">
+    <div className="mx-auto max-w-[1220px] pb-10">
 
       <section className="mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
@@ -45,7 +45,7 @@ export default function Analytics() {
         </div> */}
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <AnalyticsMetric label="Total Violations" value={formatNumber(totalViolations)} delta={isLoading ? "Loading" : "Backend"} tone="neutral" fill={percentOf(totalViolations, totalViolations)} />
         <AnalyticsMetric label="Busiest Hour" value={busiestHour ? `${busiestHour.label}:00` : "--"} delta={busiestHour ? `${busiestHour.count.toLocaleString()} cases` : "No data"} tone="neutral" fill={percentOf(busiestHour?.count, maxCount(hourlyBuckets))} />
         <AnalyticsMetric label="Top Vehicle Type" value={topVehicle?.label ?? "--"} delta={topVehicle ? topVehicle.value : "No data"} tone="neutral" fill={topVehicle?.width ?? "0%"} />
@@ -155,39 +155,37 @@ export default function Analytics() {
               </div>
             ))}
           </div>
-          <p className="mt-10 max-w-[260px] text-xs italic text-[#f0f5ff]">Vehicle counts are grouped from backend violation records.</p>
         </article>
 
         <article className="overflow-hidden rounded-xl border border-[#172638] bg-[#111f2f]">
           <h2 className="px-6 py-6 text-lg font-black text-[#f0f5ff]">Precinct Performance Ranking</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left">
-              <thead className="bg-[#223247] font-mono text-[10px] uppercase tracking-[0.18em] text-[#aeb9ca]">
+          <div className="overflow-hidden">
+            <table className="w-full table-fixed text-left">
+              <thead className="bg-[#223247] font-mono text-[10px] uppercase tracking-[0.08em] text-[#aeb9ca]">
                 <tr>
-                  <th className="px-6 py-4">Station / Precinct</th>
-                  <th className="px-6 py-4">Share</th>
-                  <th className="px-6 py-4">Citations</th>
-                  <th className="px-6 py-4">Total Share</th>
+                  <th className="w-[46%] px-4 py-4">Station / Precinct</th>
+                  <th className="px-3 py-4">Share</th>
+                  <th className="px-3 py-4">Citations</th>
+                  <th className="px-3 py-4">Total Share</th>
                 </tr>
               </thead>
               <tbody>
               {precincts.map((precinct, index) => (
                   <tr key={precinct.label} className="border-b border-[#172638] last:border-0">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-4">
+                    <td className="px-4 py-5">
+                      <div className="flex min-w-0 items-center gap-3">
                         <span className={`${index === 0 ? "bg-[#5598ff]" : "bg-[#34445a]"} grid h-8 w-8 place-items-center rounded-lg text-xs font-black text-white`}>{index + 1}</span>
-                        <div>
-                          <p className="max-w-[160px] text-lg font-black leading-tight text-[#f0f5ff]">{precinct.label}</p>
-                          <p className="mt-1 text-xs text-[#b7c2d3]">Backend ranking</p>
+                        <div className="min-w-0">
+                          <p className="break-words text-base font-black leading-tight text-[#f0f5ff]">{precinct.label}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-lg text-[#f0f5ff]">
+                    <td className="px-3 py-5 text-base text-[#f0f5ff]">
                       <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#4eff93]" />
                       {percentOf(precinct.count, maxCount(precincts))}
                     </td>
-                    <td className="px-6 py-5 font-mono text-lg text-[#f0f5ff]">{precinct.count.toLocaleString()}</td>
-                    <td className="px-6 py-5 font-mono text-lg text-[#f0f5ff]">{Math.round((precinct.count / Math.max(totalViolations ?? 1, 1)) * 100)}%</td>
+                    <td className="px-3 py-5 font-mono text-base text-[#f0f5ff]">{precinct.count.toLocaleString()}</td>
+                    <td className="px-3 py-5 font-mono text-base text-[#f0f5ff]">{Math.round((precinct.count / Math.max(totalViolations ?? 1, 1)) * 100)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -215,11 +213,11 @@ function AnalyticsMetric({
   const bar = tone === "bad" ? "#ffaaa3" : tone === "good" ? "#4eff93" : "#9aa8bc";
 
   return (
-    <article className="rounded-xl border border-[#172638] bg-[#111f2f] p-6">
+    <article className="min-w-0 rounded-xl border border-[#172638] bg-[#111f2f] p-5">
       <p className="text-base text-[#f0f5ff]">{label}</p>
-      <div className="mt-2 flex items-end gap-2">
-        <strong className="font-mono text-4xl leading-none tracking-[0.04em] text-[#e5ecf9]">{value}</strong>
-        <span className={`pb-1 text-sm font-black ${tone === "bad" ? "text-[#ffaaa3]" : tone === "good" ? "text-[#4eff93]" : "text-[#dce3f0]"}`}>{delta}</span>
+      <div className="mt-2 flex flex-wrap items-end gap-2">
+        <strong className="min-w-0 break-words font-mono text-3xl leading-none tracking-[0.02em] text-[#e5ecf9]">{value}</strong>
+        <span className={`min-w-0 break-words pb-1 text-sm font-black ${tone === "bad" ? "text-[#ffaaa3]" : tone === "good" ? "text-[#4eff93]" : "text-[#dce3f0]"}`}>{delta}</span>
       </div>
       <div className="mt-5 h-1 rounded-full bg-[#2a3a4c]">
         <div className="h-1 rounded-full" style={{ width: fill, backgroundColor: bar }} />

@@ -43,14 +43,14 @@ export default function MapView({ markers }: MapViewProps) {
       const icon = L.divIcon({
         className: "",
         html: `<div style="
-          width:16px; height:16px;
+          width:22px; height:22px;
           background:${color};
-          border:2px solid rgba(255,255,255,0.8);
+          border:3px solid rgba(255,255,255,0.92);
           border-radius:50%;
-          box-shadow: 0 0 10px ${color}99;
+          box-shadow: 0 0 0 8px ${color}22, 0 0 18px ${color}cc;
         "></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
       });
 
       const m = L.marker([marker.lat, marker.lng], { icon })
@@ -76,6 +76,13 @@ export default function MapView({ markers }: MapViewProps) {
 
       markersRef.current.push(m);
     });
+
+    if (markers.length === 1) {
+      map.setView([markers[0].lat, markers[0].lng], Math.max(map.getZoom(), 14), { animate: true });
+    } else if (markers.length > 1) {
+      const bounds = L.latLngBounds(markers.map((marker) => [marker.lat, marker.lng]));
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    }
   }
 
   function initMap() {
