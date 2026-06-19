@@ -1,20 +1,20 @@
 {
     "model_name": "Congestion Impact Scorer",
     "model_version": "2.0.0",
-    "created_at": "2026-06-18T10:39:02Z",
+    "created_at": "2026-06-19T16:16:15Z",
     "outputs": {
         "regression": {
-            "model_type": "GradientBoostingRegressor",
+            "model_type": "XGBoostRegressor",
             "target": "congestion_impact_score",
-            "validation_r2": 0.9998,
-            "validation_rmse": 0.0301,
-            "validation_mae": 0.0114
+            "validation_r2": 0.9997,
+            "validation_rmse": 0.0316,
+            "validation_mae": 0.0139
         },
         "classification": {
-            "model_type": "GradientBoostingClassifier",
+            "model_type": "XGBoostClassifier",
             "target": "congestion_risk_level",
-            "accuracy": 0.9993,
-            "f1_weighted": 0.9993
+            "accuracy": 0.9984,
+            "f1_weighted": 0.9984
         }
     },
     "features": [
@@ -23,8 +23,6 @@
         "month",
         "is_weekend",
         "at_junction",
-        "h3_total_violations",
-        "h3_hour_density",
         "vehicle_weight",
         "junction_importance",
         "station_density",
@@ -52,16 +50,16 @@
         "junction_importance",
         "violation_count",
         "station_density",
-        "offence_code_count",
-        "vehicle_weight",
-        "vehicle_category_hgv",
         "junction_vehicle_interaction",
-        "month",
+        "offence_code_count",
+        "at_junction",
         "weighted_severity",
-        "log_h3_total_violations"
+        "is_night",
+        "log_h3_total_violations",
+        "vehicle_weight"
     ],
     "training": {
-        "winner_model": "gradient_boosting",
+        "winner_model": "xgboost",
         "train_size": 233556,
         "test_size": 58389
     }
