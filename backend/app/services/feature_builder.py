@@ -51,11 +51,11 @@ class FeatureBuilder:
         return self._clean(features)
 
     def h3_cell_from_coordinates(self, latitude: float, longitude: float, resolution: int = 8) -> str:
-        if h3 is None:
-            raise RuntimeError("h3 is required to convert coordinates to cells")
-        if hasattr(h3, "latlng_to_cell"):
-            return str(h3.latlng_to_cell(latitude, longitude, resolution))
-        return str(h3.geo_to_h3(latitude, longitude, resolution))
+        if h3 is not None:
+            if hasattr(h3, "latlng_to_cell"):
+                return str(h3.latlng_to_cell(latitude, longitude, resolution))
+            return str(h3.geo_to_h3(latitude, longitude, resolution))
+        return self._nearest_known_h3_cell(latitude, longitude)
 
     def _load_volume_history(self) -> pd.DataFrame:
         path = self.dataset_root / "model2_volume_predictor.csv"
@@ -214,6 +214,22 @@ class FeatureBuilder:
                 value = float(np.nan_to_num(value))
             clean[key] = value
         return clean
+
+    def _nearest_known_h3_cell(self, latitude: float, longitude: float) -> str:
+        if self.parking_history.empty:
+            raise RuntimeError("h3 is required when no parking history is available")
+
+        required_columns = {"latitude", "longitude", "h3_cell"}
+        if not required_columns.issubset(self.parking_history.columns):
+            raise RuntimeError("parking history must include latitude, longitude, and h3_cell columns")
+
+        coordinates = self.parking_history[["latitude", "longitude", "h3_cell"]].dropna()
+        if coordinates.empty:
+            raise RuntimeError("parking history does not contain coordinates for h3 fallback")
+
+        distances = (coordinates["latitude"].astype(float) - latitude) ** 2 + (coordinates["longitude"].astype(float) - longitude) ** 2
+        nearest_index = distances.idxmin()
+        return str(coordinates.loc[nearest_index, "h3_cell"])
 
     def _naive(self, timestamp: datetime) -> datetime:
         if timestamp.tzinfo is None:

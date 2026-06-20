@@ -1,6 +1,14 @@
 import axios from "axios";
 
-import type { AnalyticsResponse, DashboardSummaryResponse, Hotspot, PatrolRecommendation, PredictionRequest, PredictionResponse } from "../types";
+import type {
+  AnalyticsResponse,
+  DashboardSummaryResponse,
+  ExplanationResponse,
+  Hotspot,
+  PatrolRecommendation,
+  PredictionRequest,
+  PredictionResponse,
+} from "../types";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api",
@@ -32,5 +40,10 @@ export async function getDashboardSummary() {
 
 export async function getPatrolRecommendations() {
   const { data } = await api.get<PatrolRecommendation[]>("/patrol/recommendations");
+  return data;
+}
+
+export async function explainPrediction(payload: PredictionRequest) {
+  const { data } = await api.post<ExplanationResponse>("/predict/explain", payload);
   return data;
 }

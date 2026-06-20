@@ -13,9 +13,12 @@ export type AnalyticsResponse = {
 };
 
 export type Hotspot = {
-  latitude: number;
-  longitude: number;
-  risk_score: number;
+  lat?: number;
+  lng?: number;
+  latitude?: number;
+  longitude?: number;
+  risk?: "high" | "medium" | "low";
+  risk_score?: number;
   predicted_violations?: number;
   congestion_score?: number;
   recommended_officers?: number;
@@ -37,6 +40,7 @@ export type PredictionResponse = {
   congestion_level: string;
   recommended_officers: number;
   recommended_tow_trucks: number;
+  simulation_curve: number[];
 };
 
 export type DashboardSummaryResponse = {
@@ -44,6 +48,16 @@ export type DashboardSummaryResponse = {
   high_risk_zones: number;
   expected_violations_today: number;
   average_congestion_score: number;
+};
+
+export type PatrolRouteStop = {
+  sequence: number;
+  h3_cell: string;
+  junction_name: string;
+  priority_score: number;
+  risk_score: number;
+  congestion_impact: number;
+  expected_violations: number;
 };
 
 export type PatrolRecommendation = {
@@ -56,4 +70,18 @@ export type PatrolRecommendation = {
   expected_violations: number;
   expected_impact_reduction: number;
   status: string;
+  route: PatrolRouteStop[];
+  route_summary: string;
+};
+
+export type ExplanationDriver = {
+  label: string;
+  impact: number;
+  direction: "increase" | "decrease" | "neutral";
+  detail: string;
+};
+
+export type ExplanationResponse = {
+  drivers: ExplanationDriver[];
+  summary: string;
 };

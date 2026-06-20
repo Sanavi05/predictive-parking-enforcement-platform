@@ -25,6 +25,9 @@ class HotspotResponse(BaseModel):
     latitude: float
     longitude: float
     risk_score: float
+    zone_name: str | None = None
+    predicted_violations: int | None = None
+    congestion_score: float | None = None
 
 
 class DashboardSummaryResponse(BaseModel):
@@ -32,6 +35,16 @@ class DashboardSummaryResponse(BaseModel):
     high_risk_zones: int
     expected_violations_today: int
     average_congestion_score: float
+
+
+class PatrolRouteStop(BaseModel):
+    sequence: int
+    h3_cell: str
+    junction_name: str
+    priority_score: float
+    risk_score: float
+    congestion_impact: float
+    expected_violations: int
 
 
 class PatrolRecommendation(BaseModel):
@@ -44,3 +57,16 @@ class PatrolRecommendation(BaseModel):
     expected_violations: int
     expected_impact_reduction: float
     status: str
+    route: list[PatrolRouteStop]
+    route_summary: str
+
+class ExplanationDriver(BaseModel):
+    label: str
+    impact: float
+    direction: str
+    detail: str
+
+
+class ExplanationResponse(BaseModel):
+    drivers: list[ExplanationDriver]
+    summary: str

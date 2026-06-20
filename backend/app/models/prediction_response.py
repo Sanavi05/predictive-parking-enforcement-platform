@@ -9,3 +9,15 @@ class PredictionResponse(BaseModel):
     congestion_level: str
     recommended_officers: int
     recommended_tow_trucks: int
+    simulation_curve: list[float] = []
+
+class ExplanationDriver(BaseModel):
+    label: str
+    impact: float        # percentage contribution e.g. 31.0
+    direction: str       # "increase" | "decrease" | "neutral"
+    detail: str          # human readable e.g. "Peak Evening (17:00–21:00)"
+
+
+class ExplanationResponse(BaseModel):
+    drivers: list[ExplanationDriver]
+    summary: str
