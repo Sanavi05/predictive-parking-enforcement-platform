@@ -70,8 +70,9 @@ export type PatrolRecommendation = {
   expected_violations: number;
   expected_impact_reduction: number;
   status: string;
-  route: PatrolRouteStop[];
-  route_summary: string;
+
+  route?: PatrolRouteStop[];
+  route_summary?: string;
 };
 
 export type ExplanationDriver = {
